@@ -6,16 +6,31 @@ import {
     RewardAdPluginEvents
 } from '@capacitor-community/admob';
 
-// TEST IDs (Replace with REAL IDs for Production)
-// REAL IDs (Production)
-const TEST_BANNER_ID = 'ca-app-pub-5979451943443465/2259938960'; // REAL USER ID
-// const TEST_BANNER_ID = 'ca-app-pub-3940256099942544/6300978111'; // GOOGLE TEST ID
-const TEST_REWARD_ID = 'ca-app-pub-5979451943443465/8561607522';
-const TEST_INTERSTITIAL_ID = 'ca-app-pub-5979451943443465/5980278852'; // REAL INTERSTITIAL ID
-const APP_OPEN_ID = 'ca-app-pub-5979451943443465/6845803814'; // REAL APP OPEN ID
+// Set to true for Debugging & Testing on device (guarantees 100% ad fill without policy violations)
+// Set to false for Production release on Google Play Store
+export const USE_TEST_ADS = true;
+
+// Google Official Test Ad Unit IDs
+const GOOGLE_TEST_BANNER = 'ca-app-pub-3940256099942544/6300978111';
+const GOOGLE_TEST_REWARD = 'ca-app-pub-3940256099942544/5224354917';
+const GOOGLE_TEST_INTERSTITIAL = 'ca-app-pub-3940256099942544/1033173712';
+const GOOGLE_TEST_APP_OPEN = 'ca-app-pub-3940256099942544/9257395921';
+
+// Real Production IDs
+const PROD_BANNER_ID = 'ca-app-pub-5979451943443465/2259938960';
+const PROD_REWARD_ID = 'ca-app-pub-5979451943443465/8561607522';
+const PROD_INTERSTITIAL_ID = 'ca-app-pub-5979451943443465/5980278852';
+const PROD_APP_OPEN_ID = 'ca-app-pub-5979451943443465/6845803814';
+
+// Active IDs based on Mode
+const BANNER_ID = USE_TEST_ADS ? GOOGLE_TEST_BANNER : PROD_BANNER_ID;
+const REWARD_ID = USE_TEST_ADS ? GOOGLE_TEST_REWARD : PROD_REWARD_ID;
+const INTERSTITIAL_ID = USE_TEST_ADS ? GOOGLE_TEST_INTERSTITIAL : PROD_INTERSTITIAL_ID;
+const APP_OPEN_ID = USE_TEST_ADS ? GOOGLE_TEST_APP_OPEN : PROD_APP_OPEN_ID;
 
 export const AdMobService = {
     initialized: false,
+    currentRewardResolve: null,
 
     async initialize() {
         if (!Capacitor.isNativePlatform()) return;
@@ -23,25 +38,13 @@ export const AdMobService = {
         try {
             await AdMob.initialize({
                 requestTrackingAuthorization: true,
-                initializeForTesting: false, // DISABLE TEST MODE
+                testingDevices: ['A0C6D8DE1F5997F81CBCA1D752A9CFAD'],
+                initializeForTesting: USE_TEST_ADS
             });
             this.initialized = true;
-            console.log('AdMob Initialized');
+            console.log('AdMob Initialized (Test Mode:', USE_TEST_ADS, ')');
         } catch (e) {
             console.error('AdMob Init Fail:', e);
-        }
-    },
-
-    async showAppOpen() {
-        if (!Capacitor.isNativePlatform()) return;
-        try {
-           await AdMob.prepareAppOpenAd({
-               adId: APP_OPEN_ID,
-               isTesting: false
-           });
-           await AdMob.showAppOpenAd();
-        } catch (e) {
-           console.error("App Open Ad Fail", e);
         }
     },
 
@@ -49,11 +52,11 @@ export const AdMobService = {
         if (!Capacitor.isNativePlatform()) return;
         try {
             const options = {
-                adId: TEST_BANNER_ID,
+                adId: BANNER_ID,
                 adSize: BannerAdSize.ADAPTIVE_BANNER,
                 position: BannerAdPosition.BOTTOM_CENTER,
                 margin: 0,
-                isTesting: false // DISABLE TEST MODE
+                isTesting: USE_TEST_ADS
             };
             await AdMob.showBanner(options);
         } catch (e) {
@@ -70,7 +73,7 @@ export const AdMobService = {
 
     async registerListeners() {
         if (!Capacitor.isNativePlatform()) return;
-        // Register Global Listeners
+
         const handleReward = (reward) => {
             console.log("Ad Rewarded", reward);
             if (this.currentRewardResolve) {
@@ -79,7 +82,6 @@ export const AdMobService = {
             }
         };
 
-        // Try both event names for compatibility
         if (RewardAdPluginEvents.Rewarded) {
             await AdMob.addListener(RewardAdPluginEvents.Rewarded, handleReward);
         }
@@ -88,15 +90,12 @@ export const AdMobService = {
         }
 
         await AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
-             console.log("Ad Dismissed");
-             // Resume Banner if it disappeared
-             this.showBanner();
-             
-             // Only resolve false if we haven't resolved true yet
-             if (this.currentRewardResolve) {
-                 this.currentRewardResolve(false);
-                 this.currentRewardResolve = null;
-             }
+            console.log("Ad Dismissed");
+            this.showBanner();
+            if (this.currentRewardResolve) {
+                this.currentRewardResolve(false);
+                this.currentRewardResolve = null;
+            }
         });
         
         await AdMob.addListener(RewardAdPluginEvents.FailedToLoad, (err) => {
@@ -108,16 +107,14 @@ export const AdMobService = {
         });
     },
 
-    currentRewardResolve: null,
-
     async showRewardVideo() {
         if (!Capacitor.isNativePlatform()) return true;
         return new Promise(async (resolve) => {
             this.currentRewardResolve = resolve;
             try {
                 await AdMob.prepareRewardVideoAd({
-                    adId: TEST_REWARD_ID,
-                    isTesting: false // DISABLE TEST MODE
+                    adId: REWARD_ID,
+                    isTesting: USE_TEST_ADS
                 });
                 await AdMob.showRewardVideoAd();
             } catch (e) {
@@ -132,8 +129,8 @@ export const AdMobService = {
         if (!Capacitor.isNativePlatform()) return;
         try {
             await AdMob.prepareInterstitial({
-                adId: TEST_INTERSTITIAL_ID,
-                isTesting: false // DISABLE TEST MODE (Use Real ID for release)
+                adId: INTERSTITIAL_ID,
+                isTesting: USE_TEST_ADS
             });
             await AdMob.showInterstitial();
         } catch(e) {

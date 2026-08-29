@@ -28,12 +28,15 @@ function AppContent() {
         const initAdMob = async () => {
             await AdMobService.initialize();
             await AdMobService.registerListeners();
-            // Show App Open Ad (High Value)
-            await AdMobService.showAppOpen();
-            // Then Banner
-            await AdMobService.showBanner();
         };
         initAdMob();
+
+        // Dynamically manage Banner ad visibility based on route
+        if (location.pathname === '/auth') {
+            AdMobService.hideBanner();
+        } else {
+            AdMobService.showBanner();
+        }
 
         import('./lib/supabaseClient').then(({ supabase }) => {
             const minDelay = new Promise(resolve => setTimeout(resolve, 1000));
@@ -68,6 +71,15 @@ function AppContent() {
             return () => subscription.unsubscribe();
         });
     }, []);
+
+    // Control Banner visibility based on active page (hide on /auth)
+    useEffect(() => {
+        if (location.pathname === '/auth') {
+            AdMobService.hideBanner();
+        } else {
+            AdMobService.showBanner();
+        }
+    }, [location.pathname]);
 
     // Deep Link Handler
     useEffect(() => {
