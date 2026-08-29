@@ -1,0 +1,507 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Mandali&display=swap');
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(180deg, #001f3f 0%, #4b3ca3 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    overflow: hidden;
+}
+
+.quiz-container,
+.scoreboard-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 3px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+    height: 100vh;
+    /*Full height for mobile layout*/
+    justify-content: flex-start;
+    /* Start from top */
+}
+
+.scoreboard-container {
+    justify-content: center;
+    text-align: center;
+}
+
+/* Header Styles */
+.header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-top: 10px;
+}
+
+.back-arrow {
+    font-size: 40px;
+    color: #c5a065;
+    /* Gold/Brown color */
+    cursor: pointer;
+    line-height: 1;
+}
+
+.title-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#book-title {
+    margin: 0;
+    font-size: 28px;
+    color: #8BC34A;
+    /* Greenish Gold */
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+.chapter-info {
+    font-size: 14px;
+    color: #aaa;
+    margin-top: 2px;
+}
+
+.timer-circle {
+    width: 50px;
+    height: 50px;
+    background-color: #ecb40b;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 20px;
+    color: black;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+/* Scribble effect for timer */
+.timer-circle::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border: 2px solid #ffc107;
+    border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
+    transform: rotate(-10deg);
+}
+
+.icon-container {
+    margin-bottom: 20px;
+    /* width: 100px; */
+    height: 200px;
+}
+
+.quiz-icon {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+    object-fit: contain;
+}
+
+/* Question Box */
+.question-box {
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+    /* Cyan Gradient */
+    padding: 20px;
+    border-radius: 50px;
+    /* Pill shape */
+    margin-bottom: 30px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+    min-height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.question-box p {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+    color: black;
+    line-height: 1.4;
+    font-family: 'Mandali', sans-serif;
+}
+
+/* Options */
+.options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.option-btn {
+    background: #c5a065;
+    /* Gold/Brown color */
+    border: none;
+    padding: 15px;
+    font-size: 20px;
+    font-weight: bold;
+    color: black;
+    cursor: pointer;
+    position: relative;
+    width: 90%;
+    margin: 0 auto;
+
+    /* Simulate brush stroke / rough edges */
+    /* Using a simple clip-path for a jagged look, or border-radius for cleaner look if preferred */
+    /* Let's try a subtle jagged look */
+    clip-path: polygon(2% 0%, 98% 2%, 100% 90%, 95% 100%,
+            5% 98%, 0% 10%);
+
+    /* Add texture via gradient */
+    background: linear-gradient(90deg, #d4b483 0%, #b08d55 100%);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s;
+}
+
+.option-btn:hover {
+    transform: scale(1.02);
+    background: linear-gradient(90deg, #e0c090 0%, #c09a60 100%);
+}
+
+.option-btn:active {
+    transform: scale(0.98);
+}
+
+.option-btn.correct {
+    background: linear-gradient(90deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+}
+
+.option-btn.wrong {
+    background: linear-gradient(90deg, #F44336 0%, #e53935 100%);
+    color: white;
+}
+
+.next-btn {
+    background-color: white;
+    color: black;
+    border: none;
+    padding: 12px 40px;
+    border-radius: 30px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s;
+}
+
+.next-btn:hover {
+    background-color: #f0f0f0;
+}
+
+/* Feedback Overlay */
+.feedback-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.feedback-icon {
+    font-size: 100px;
+    font-weight: bold;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.feedback-icon.correct {
+    color: #4CAF50;
+    text-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+}
+
+.feedback-icon.wrong {
+    color: #F44336;
+    text-shadow: 0 0 20px rgba(244, 67, 54, 0.8);
+}
+
+@keyframes popIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Confetti */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    top: -10px;
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+.chapter-info {
+    font-size: 14px;
+    color: #aaa;
+    margin-top: 2px;
+}
+
+.timer-circle {
+    width: 50px;
+    height: 50px;
+    background-color: #ecb40b;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 20px;
+    color: black;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+/* Scribble effect for timer */
+.timer-circle::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border: 2px solid #ffc107;
+    border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
+    transform: rotate(-10deg);
+}
+
+.icon-container {
+    margin-bottom: 20px;
+    /* width: 100px; */
+    height: 200px;
+}
+
+.quiz-icon {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+    object-fit: contain;
+}
+
+/* Question Box */
+.question-box {
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+    /* Cyan Gradient */
+    padding: 20px;
+    border-radius: 50px;
+    /* Pill shape */
+    margin-bottom: 30px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+    min-height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.question-box p {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+    color: black;
+    line-height: 1.4;
+    font-family: 'Mandali', sans-serif;
+}
+
+/* Options */
+.options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.option-btn {
+    background: #c5a065;
+    /* Gold/Brown color */
+    border: none;
+    padding: 15px;
+    font-size: 20px;
+    font-weight: bold;
+    color: black;
+    cursor: pointer;
+    position: relative;
+    width: 90%;
+    margin: 0 auto;
+
+    /* Simulate brush stroke / rough edges */
+    /* Using a simple clip-path for a jagged look, or border-radius for cleaner look if preferred */
+    /* Let's try a subtle jagged look */
+    clip-path: polygon(2% 0%, 98% 2%, 100% 90%, 95% 100%,
+            5% 98%, 0% 10%);
+
+    /* Add texture via gradient */
+    background: linear-gradient(90deg, #d4b483 0%, #b08d55 100%);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s;
+}
+
+.option-btn:hover {
+    transform: scale(1.02);
+    background: linear-gradient(90deg, #e0c090 0%, #c09a60 100%);
+}
+
+.option-btn:active {
+    transform: scale(0.98);
+}
+
+.option-btn.correct {
+    background: linear-gradient(90deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+}
+
+.option-btn.wrong {
+    background: linear-gradient(90deg, #F44336 0%, #e53935 100%);
+    color: white;
+}
+
+.next-btn {
+    background-color: white;
+    color: black;
+    border: none;
+    padding: 12px 40px;
+    border-radius: 30px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: background-color 0.2s;
+}
+
+.next-btn:hover {
+    background-color: #f0f0f0;
+}
+
+/* Feedback Overlay */
+.feedback-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.feedback-icon {
+    font-size: 100px;
+    font-weight: bold;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.feedback-icon.correct {
+    color: #4CAF50;
+    text-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+}
+
+.feedback-icon.wrong {
+    color: #F44336;
+    text-shadow: 0 0 20px rgba(244, 67, 54, 0.8);
+}
+
+@keyframes popIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Confetti */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    top: -10px;
+    z-index: 99;
+    animation: fall linear forwards;
+}
+
+@keyframes fall {
+    to {
+        transform: translateY(100vh) rotate(720deg);
+    }
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 31, 63, 0.95);
+    /* Deep dark blue */
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+    flex-direction: column;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 4px solid transparent;
+    border-top-color: #ffc107;
+    /* Gold */
+    border-right-color: #4CAF50;
+    /* Green */
+    border-bottom-color: #F44336;
+    /* Red */
+    border-left-color: #00f2fe;
+    /* Cyan */
+    animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+    /* Bouncy spin */
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}

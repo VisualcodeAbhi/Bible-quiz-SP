@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esther Levels</title>
+    <link rel="stylesheet" href="levels.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Esther Levels</h1>
+        </div>
+        <div class="levels-grid" id="levels-grid">
+            <!-- Levels will be injected here by JS -->
+        </div>
+        <button class="back-btn" onclick="location.href='OT.html'">Back to Books</button>
+    </div>
+
+    <script src="jsfiles/Estherdata.js"></script>
+    <script src="jsfiles/Levels.js"></script>
+    <script>
+        // Initialize levels for Esther
+        const bookName = "Esther";
+        const chapters = bibleData[bookName].chapters;
+        generateLevels(chapters, bookName);
+    </script>
+</body>
+
+</html>

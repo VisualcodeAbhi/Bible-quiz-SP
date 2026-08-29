@@ -1,0 +1,265 @@
+{
+  "chapters": 5,
+  "levels": {
+    "1": [
+      {
+        "question": "What did God create in the beginning?",
+        "options": [
+          "Man",
+          "Heavens and the Earth",
+          "Sun and Moon",
+          "Stars"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What did God call the light?",
+        "options": [
+          "Day",
+          "Sky",
+          "Earth",
+          "Night"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "What did God call the darkness?",
+        "options": [
+          "Evening",
+          "Morning",
+          "Night",
+          "Day"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What appeared when God gathered the waters under the sky?",
+        "options": [
+          "Dry Ground",
+          "Sea",
+          "Mountain",
+          "River"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "Who did God create in His own image?",
+        "options": [
+          "Angels",
+          "Birds",
+          "Man",
+          "Animals"
+        ],
+        "correct": 2
+      }
+    ],
+    "2": [
+      {
+        "question": "On which day did God rest?",
+        "options": [
+          "Sixth",
+          "First",
+          "Eighth",
+          "Seventh"
+        ],
+        "correct": 3
+      },
+      {
+        "question": "What did God form man from?",
+        "options": [
+          "Wood",
+          "Water",
+          "Stone",
+          "Dust of the ground"
+        ],
+        "correct": 3
+      },
+      {
+        "question": "Which tree was in the middle of the garden?",
+        "options": [
+          "Fig tree",
+          "Tree of Life",
+          "Tree of the knowledge of good and evil",
+          "Vine"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Into how many headwaters did the river from Eden divide?",
+        "options": [
+          "Five",
+          "Two",
+          "Three",
+          "Four"
+        ],
+        "correct": 3
+      },
+      {
+        "question": "What did God make the woman from?",
+        "options": [
+          "Rib",
+          "Blood",
+          "Foot",
+          "Dust"
+        ],
+        "correct": 0
+      }
+    ],
+    "3": [
+      {
+        "question": "Which animal was more crafty than any of the wild animals?",
+        "options": [
+          "Fox",
+          "Bear",
+          "Lion",
+          "Serpent"
+        ],
+        "correct": 3
+      },
+      {
+        "question": "Where did Adam and Eve hide?",
+        "options": [
+          "In a cave",
+          "On a mountain",
+          "Among the trees of the garden",
+          "In a house"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Because of whom was the ground cursed?",
+        "options": [
+          "Cain",
+          "Eve",
+          "Adam",
+          "Serpent"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Where did God place the Cherubim?",
+        "options": [
+          "West of Eden",
+          "North of Eden",
+          "South of Eden",
+          "East of Eden"
+        ],
+        "correct": 3
+      },
+      {
+        "question": "What was Adam's wife's name?",
+        "options": [
+          "Rebekah",
+          "Hagar",
+          "Sarah",
+          "Eve"
+        ],
+        "correct": 3
+      }
+    ],
+    "4": [
+      {
+        "question": "What happened to Abel's offering?",
+        "options": [
+          "God rejected it",
+          "God accepted it",
+          "It was burned",
+          "It was stolen"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Who was the first murderer?",
+        "options": [
+          "Abel",
+          "Cain",
+          "Lamech",
+          "Adam"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What was Cain's occupation?",
+        "options": [
+          "Shepherd",
+          "Farmer",
+          "Hunter",
+          "Carpenter"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Where did Cain dwell?",
+        "options": [
+          "Land of Canaan",
+          "Land of Nod",
+          "Eden",
+          "Egypt"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What was the name of Adam's third son?",
+        "options": [
+          "Cain",
+          "Abel",
+          "Seth",
+          "Enoch"
+        ],
+        "correct": 2
+      }
+    ],
+    "5": [
+      {
+        "question": "How many years did Adam live?",
+        "options": [
+          "969",
+          "930",
+          "950",
+          "900"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Who lived the longest on earth?",
+        "options": [
+          "Adam",
+          "Methuselah",
+          "Enoch",
+          "Noah"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "How old was Methuselah?",
+        "options": [
+          "950",
+          "969",
+          "930",
+          "960"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Who walked with God?",
+        "options": [
+          "Adam",
+          "Noah",
+          "Enoch",
+          "Seth"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Who was Noah's father?",
+        "options": [
+          "Mahalalel",
+          "Methuselah",
+          "Enoch",
+          "Lamech"
+        ],
+        "correct": 3
+      }
+    ]
+  }
+}

@@ -1,0 +1,64 @@
+.stars-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    /* Behind content but potentially effectively background */
+    background: url('/images/test1.jpeg');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+    /* pointer-events: none;  <-- If we want interaction on background, remove this. 
+       But generally background shouldn't block clicks. */
+    pointer-events: none;
+}
+
+/* Individual stars */
+.star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--duration) ease-in-out infinite;
+    box-shadow: 0 0 var(--glow) var(--color);
+    will-change: opacity, transform;
+}
+
+@keyframes twinkle {
+
+    0%,
+    100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+/* Shooting stars */
+@keyframes shootingStar {
+    0% {
+        transform: translateX(0) translateY(0) rotate(-45deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateX(-100vh) translateY(100vh) rotate(-45deg);
+        opacity: 0;
+    }
+}
+
+.shooting-star {
+    position: absolute;
+    width: 100px;
+    height: 2px;
+    background: linear-gradient(90deg, white, transparent);
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+    animation: shootingStar 2s linear infinite;
+    opacity: 0;
+}

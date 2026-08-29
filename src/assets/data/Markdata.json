@@ -1,0 +1,265 @@
+{
+  "chapters": 5,
+  "levels": {
+    "1": [
+      {
+        "question": "How does Mark begin his Gospel?",
+        "options": [
+          "Genealogy of Jesus",
+          "Birth of Jesus",
+          "The beginning of the gospel of Jesus Christ",
+          "In the beginning was the Word"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Who is the voice crying in the wilderness?",
+        "options": [
+          "Isaiah",
+          "Jesus",
+          "John the Baptist",
+          "Peter"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What happened when Jesus came up out of the water?",
+        "options": [
+          "The heavens opened and the Spirit descended like a dove",
+          "Thunder struck",
+          "The water turned to wine",
+          "People cheered"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "Who ministered to Jesus in the wilderness?",
+        "options": [
+          "Disciples",
+          "Angels",
+          "Wild beasts",
+          "Prophets"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What authority did Jesus show in Capernaum?",
+        "options": [
+          "Authority over unclean spirits",
+          "Authority over Pilate",
+          "Authority to tax",
+          "Authority to build"
+        ],
+        "correct": 0
+      }
+    ],
+    "2": [
+      {
+        "question": "How did the four men bring the paralytic to Jesus?",
+        "options": [
+          "Through the door",
+          "Through a window",
+          "Broken up the roof and let him down",
+          "Waited in line"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Why did the scribes reason in their hearts?",
+        "options": [
+          "Because Jesus healed on Sabbath",
+          "Because Jesus forgave sins",
+          "Because Jesus shouted",
+          "Because Jesus was late"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Who was sitting at the receipt of custom?",
+        "options": [
+          "Peter",
+          "James",
+          "Levi (Matthew)",
+          "Andrew"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Who needs a physician?",
+        "options": [
+          "The whole",
+          "The sick",
+          "The rich",
+          "The wise"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "The Sabbath was made for...",
+        "options": [
+          "God",
+          "Angels",
+          "Man",
+          "Priests"
+        ],
+        "correct": 2
+      }
+    ],
+    "3": [
+      {
+        "question": "What did Jesus do to the man with the withered hand?",
+        "options": [
+          "Sent him away",
+          "Healed him",
+          "Ignored him",
+          "Scolded him"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What did the unclean spirits cry out when they saw Him?",
+        "options": [
+          "Depart from us",
+          "Thou art the Son of God",
+          "Help us",
+          "Who are you?"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "How many did He ordain to be with Him?",
+        "options": [
+          "Seven",
+          "Ten",
+          "Twelve",
+          "Seventy"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Who is Beelzebub?",
+        "options": [
+          "Prince of the devils",
+          "A king",
+          "A priest",
+          "A prophet"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "Who is Jesus' brother and sister and mother?",
+        "options": [
+          "His blood relatives",
+          "Whosoever shall do the will of God",
+          "The angels",
+          "The Pharisees"
+        ],
+        "correct": 1
+      }
+    ],
+    "4": [
+      {
+        "question": "What happened to the seed on stony ground?",
+        "options": [
+          "Birds ate it",
+          "It brought forth fruit",
+          "It sprang up but scorched because it had no root",
+          "Choked by thorns"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What cares choke the word?",
+        "options": [
+          "Cares of this world and deceitfulness of riches",
+          "Care for others",
+          "Care for health",
+          "None"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "To what is the kingdom of God likened?",
+        "options": [
+          "A mustard seed",
+          "A rock",
+          "A sword",
+          "A mountain"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "Where was Jesus during the storm?",
+        "options": [
+          "Praying",
+          "Walking on water",
+          "Asleep in the hinder part of the ship",
+          "Teaching"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What did Jesus say to the sea?",
+        "options": [
+          "Move",
+          "Peace, be still",
+          "Rise up",
+          "Dry up"
+        ],
+        "correct": 1
+      }
+    ],
+    "5": [
+      {
+        "question": "Where did the man with the unclean spirit dwell?",
+        "options": [
+          "In a house",
+          "Among the tombs",
+          "In the temple",
+          "In the desert"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What was the name of the unclean spirit?",
+        "options": [
+          "Legion",
+          "Satan",
+          "Lucifer",
+          "Demon"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "Into what animals did the devils enter?",
+        "options": [
+          "Sheep",
+          "Camels",
+          "Swine",
+          "Dogs"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Who was Jairus?",
+        "options": [
+          "A fisherman",
+          "A ruler of the synagogue",
+          "A tax collector",
+          "A blind man"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What did Jesus say to the damsel?",
+        "options": [
+          "Talitha cumi",
+          "Ephphatha",
+          "Hosanna",
+          "Rise up"
+        ],
+        "correct": 0
+      }
+    ]
+  }
+}

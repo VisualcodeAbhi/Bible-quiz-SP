@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Science+Gothic:wght@100..900&display=swap');
+
+/* Global styles */
+* {
+    box-sizing: border-box;
+}
+
+h1 {
+    font-family: "Science Gothic", sans-serif;
+    text-align: center;
+}
+
+.box {
+    font-family: "Science Gothic", sans-serif;
+    width: 300px;
+    margin: 20px auto;
+    padding: 10px;
+    background: rgba(239, 247, 239, 0.727);
+    border-radius: 10px;
+    text-align: center;
+    /* color: rgb(255, 255, 255); */
+    font-size: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease;
+}
+
+.box:hover {
+    background: rgba(253, 0, 0, 0.5);
+    color: aliceblue !important;
+}
+
+a {
+    text-decoration: none;
+    color: rgb(0, 0, 0);
+    /* -webkit-text-stroke: 2px rgba(0, 0, 0, 0.308); */
+}
+
+/* Hide the device restriction message globally */
+.img {
+    display: none !important;
+}
+
+/* Base styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(180deg, #001f3f 0%, #4b3ca3 100%);
+    /* Approximate gradient */
+    min-height: 100vh;
+    color: rgb(255, 255, 255);
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+header {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+}
+
+.menu-icon {
+    font-size: 30px;
+    margin-right: 20px;
+    cursor: pointer;
+}
+
+h1 {
+    margin: 0;
+    font-size: 28px;
+    flex-grow: 1;
+    text-align: center;
+    /* Offset center to account for menu icon if needed, or just center in available space */
+    padding-right: 30px;
+    /* Balance the menu icon */
+}
+
+/* Grid Container */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    padding: 20px;
+    justify-items: center;
+}
+
+/* Circle Buttons */
+.level-btn {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e0c3fc 0%, #ffd700 100%);
+    /* Lilac to Gold gradient */
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: black;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.1s;
+}
+
+.level-btn:active {
+    transform: scale(0.95);
+}
+
+.level-btn:hover {
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.4);
+}

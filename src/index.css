@@ -1,0 +1,408 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Mandali&family=Science+Gothic:wght@100..900&display=swap');
+
+* {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    outline: none;
+}
+
+html {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(180deg, #001f3f 0%, #4b3ca3 100%);
+    background-attachment: fixed;
+    height: 100%;
+    /* Fixed height */
+    overflow: hidden;
+    /* Prevent body scroll */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    overscroll-behavior-y: none;
+}
+
+#root {
+    width: 100%;
+    min-height: 100vh;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+    /* Lock app height */
+    overflow: hidden;
+    /* Prevent app-wide scroll */
+    /* Padding moved to individual pages */
+    position: relative;
+    z-index: 1;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 400px;
+    justify-content: center;
+    min-height: 100vh;
+    padding-top: 50px;
+    margin: 0 auto;
+    /* Center in block parents */
+    /* Reduced top padding as requested */
+}
+
+.logo {
+    width: 200px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+h1 {
+    text-align: center;
+    font-size: 28px;
+    line-height: 1.2;
+    margin: 0 0 40px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    grid-column: 2;
+}
+
+header h1 {
+    margin: 0;
+}
+
+.btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 60%;
+}
+
+.action-btn {
+    background-color: white;
+    color: black;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Bouncy */
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.action-btn:active {
+    transform: scale(0.9);
+    filter: brightness(0.9);
+}
+
+.btn-main-text {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 2px;
+}
+
+.btn-sub-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #000;
+}
+
+/* OT/NT Page Styles */
+.book-link {
+    text-decoration: none;
+    color: black;
+    display: block;
+}
+
+.box {
+    font-family: "Science Gothic", sans-serif;
+    width: 300px;
+    margin: 20px auto;
+    padding: 10px;
+    background: rgba(239, 247, 239, 0.727);
+    border-radius: 10px;
+    text-align: center;
+    font-size: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: background 0.3s ease;
+}
+
+.box:hover {
+    background: rgba(253, 0, 0, 0.5);
+    color: aliceblue !important;
+}
+
+.menu-icon,
+.back-arrow {
+    font-size: 30px;
+    cursor: pointer;
+    color: white;
+    justify-self: start;
+    /* Align to left of its grid cell */
+}
+
+header {
+    display: grid;
+    grid-template-columns: 50px 1fr 50px;
+    align-items: center;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 20px;
+}
+
+/* Level Grid */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    padding: 20px;
+    justify-items: center;
+    width: 100%;
+    max-width: 400px;
+}
+
+.level-btn {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8B4513 0%, #FFFFFF 100%);
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: black;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.level-btn:active {
+    transform: scale(0.9);
+    filter: brightness(0.9);
+}
+
+/* Quiz Page Styles (Merge from quiz.css) */
+.quiz-wrapper {
+    width: 100%;
+    max-width: 400px;
+    padding: 3px;
+    padding-top: 40px;
+    /* Reduced top padding */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+    min-height: 100vh;
+}
+
+.chapter-info {
+    font-size: 14px;
+    color: black;
+    margin-top: 2px;
+}
+
+.timer-circle {
+    width: 50px;
+    height: 50px;
+    background-color: #ecb40b;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 20px;
+    color: black;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    position: relative;
+    margin-right: 20px;
+}
+
+.timer-circle::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border: 2px solid #ffc107;
+    border-radius: 45% 55% 40% 60% / 55% 45% 60% 40%;
+    transform: rotate(-10deg);
+}
+
+.question-box {
+    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+    padding: 20px;
+    border-radius: 50px;
+    margin-bottom: 30px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+    min-height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.question-box p {
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+    color: black;
+    line-height: 1.4;
+    font-family: 'Mandali', sans-serif;
+}
+
+.options-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.option-btn {
+    background: #c5a065;
+    border: none;
+    padding: 15px;
+    font-size: 20px;
+    font-weight: bold;
+    color: black;
+    cursor: pointer;
+    position: relative;
+    width: 90%;
+    margin: 0 auto;
+    clip-path: polygon(2% 0%, 98% 2%, 100% 90%, 95% 100%, 5% 98%, 0% 10%);
+    background: linear-gradient(90deg, #d4b483 0%, #b08d55 100%);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.option-btn:hover {
+    transform: scale(1.02);
+    /* background: linear-gradient(90deg, #e0c090 0%, #c09a60 100%);  <-- Let logic handle colors */
+    filter: brightness(1.1);
+}
+
+.option-btn:active {
+    transform: scale(0.95);
+    filter: brightness(0.9);
+}
+
+.option-btn.correct {
+    background: linear-gradient(90deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+}
+
+.option-btn.wrong {
+    background: linear-gradient(90deg, #F44336 0%, #e53935 100%);
+    color: white;
+}
+
+
+.score-text {
+    font-size: 24px;
+    margin: 20px 0;
+    font-weight: bold;
+}
+
+/* Background Wrappers with Opacity */
+/* Background Wrappers */
+/* Background Wrappers */
+.books-bg-wrapper,
+.levels-bg-wrapper,
+.stats-bg-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* Fill app-container */
+    overflow-y: auto;
+    /* Internal scroll */
+    overflow-x: hidden;
+    padding-bottom: 60px;
+    /* Space for AdMob */
+    display: block;
+    /* Changed from flex to block for better scrolling */
+    overscroll-behavior: contain;
+}
+
+.home-bg-wrapper,
+.quiz-bg-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    /* Fill app-container */
+    overflow: hidden;
+    /* No scroll */
+    padding-bottom: 60px;
+    /* Space for AdMob */
+    display: flex;
+    justify-content: center;
+    overscroll-behavior: none;
+}
+
+/* Background Pseudo-elements */
+.home-bg-wrapper::before,
+.books-bg-wrapper::before,
+.quiz-bg-wrapper::before,
+.levels-bg-wrapper::before,
+.stats-bg-wrapper::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    z-index: 0;
+    pointer-events: none;
+    /* Ensure clicks go through */
+}
+
+/* Specific Backgrounds */
+/* Specific Backgrounds - Removed in favor of global StarryBackground component */
+/* The StarryBackground component in App.jsx now handles the background for all pages */
+
+/* Ensure content sits above background */
+.home-bg-wrapper>*,
+.books-bg-wrapper>*,
+.levels-bg-wrapper>*,
+.quiz-bg-wrapper>*,
+.stats-bg-wrapper>* {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}

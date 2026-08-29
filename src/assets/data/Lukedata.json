@@ -1,0 +1,265 @@
+{
+  "chapters": 5,
+  "levels": {
+    "1": [
+      {
+        "question": "To whom did Luke address his Gospel?",
+        "options": [
+          "Peter",
+          "Theophilus",
+          "Paul",
+          "John"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Who was the wife of Zacharias?",
+        "options": [
+          "Mary",
+          "Elisabeth",
+          "Anna",
+          "Martha"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What happened to Zacharias because he disbelieved?",
+        "options": [
+          "He became blind",
+          "He became dumb (speechless)",
+          "He died",
+          "He was cast out"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What did the angel Gabriel say to Mary?",
+        "options": [
+          "Fear not",
+          "Run away",
+          "Go to Egypt",
+          "Silence"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "What leaped in Elisabeth's womb?",
+        "options": [
+          "Nothing",
+          "The babe (John)",
+          "Her heart",
+          "A sign"
+        ],
+        "correct": 1
+      }
+    ],
+    "2": [
+      {
+        "question": "Who issued a decree that all the world should be taxed?",
+        "options": [
+          "Herod",
+          "Caesar Augustus",
+          "Pilate",
+          "Philip"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Where was Jesus laid?",
+        "options": [
+          "In a bed",
+          "In a manger",
+          "In a cradle",
+          "On the floor"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Who revealed the birth to the shepherds?",
+        "options": [
+          "A king",
+          "An angel of the Lord",
+          "A prophet",
+          "A star"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Who was the just and devout man waiting for the consolation of Israel?",
+        "options": [
+          "Zacharias",
+          "Simeon",
+          "Joseph",
+          "Anna"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Where did they find Jesus when he was twelve?",
+        "options": [
+          "Playing",
+          "In the temple, sitting in the midst of the doctors",
+          "Lost in the city",
+          "With relatives"
+        ],
+        "correct": 1
+      }
+    ],
+    "3": [
+      {
+        "question": "Who prepared the way of the Lord?",
+        "options": [
+          "John the Baptist",
+          "Peter",
+          "Paul",
+          "Isaiah"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "What did John say God is able to raise up children to Abraham from?",
+        "options": [
+          "Trees",
+          "Stones",
+          "Dust",
+          "Water"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What did the Holy Ghost descend in bodily shape like?",
+        "options": [
+          "Fire",
+          "Wind",
+          "A Dove",
+          "Water"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "How old was Jesus when He began his ministry?",
+        "options": [
+          "Twenty",
+          "Thirty",
+          "Forty",
+          "Fifty"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Genealogy in Luke traces Jesus back to...?",
+        "options": [
+          "Abraham",
+          "David",
+          "Adam, which was the son of God",
+          "Solomon"
+        ],
+        "correct": 2
+      }
+    ],
+    "4": [
+      {
+        "question": "Where was Jesus led by the Spirit?",
+        "options": [
+          "Into the temple",
+          "Into the wilderness",
+          "Into Galilee",
+          "Into Jerusalem"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What was Jesus given to read in Nazareth?",
+        "options": [
+          "Book of Psalms",
+          "Book of the prophet Esaias (Isaiah)",
+          "Book of Moses",
+          "Book of Jeremiah"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "How did the people of Nazareth react?",
+        "options": [
+          "They worshipped Him",
+          "They rose up and thrust Him out of the city",
+          "They gave Him gifts",
+          "They followed Him"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Whose mother-in-law was sick with a fever?",
+        "options": [
+          "James'",
+          "John's",
+          "Simon's (Peter's)",
+          "Andrew's"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What did the devils cry out?",
+        "options": [
+          "Thou art Christ the Son of God",
+          "Leave us alone",
+          "We know you",
+          "Help us"
+        ],
+        "correct": 0
+      }
+    ],
+    "5": [
+      {
+        "question": "From whose ship did Jesus teach?",
+        "options": [
+          "James'",
+          "Simon's",
+          "John's",
+          "His own"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What happened when they let down their nets at Jesus' word?",
+        "options": [
+          "They caught nothing",
+          "The net broke",
+          "They enclosed a great multitude of fishes",
+          "They caught only one fish"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What did Jesus say to the leper?",
+        "options": [
+          "Go show thyself to the priest",
+          "I will: be thou clean",
+          "You are healed",
+          "Sin no more"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "How did the man with palsy get to Jesus?",
+        "options": [
+          "Through the roof",
+          "Through the crowd",
+          "By the door",
+          "He was carried"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "Why do the disciples of John fast, but yours eat and drink?",
+        "options": [
+          "Because the bridegroom is with them",
+          "They are hungry",
+          "They are gluttons",
+          "They do not know the law"
+        ],
+        "correct": 0
+      }
+    ]
+  }
+}

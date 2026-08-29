@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1 Samuel Levels</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 20px;
+            font-size: 2.5rem;
+        }
+
+        .levels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            width: 90%;
+            max-width: 800px;
+        }
+
+        .level-btn {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .level-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .level-btn.locked {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .level-btn.completed {
+            background: linear-gradient(135deg, #28a745, #85e085);
+        }
+
+        .home-btn {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding: 10px 20px;
+            background-color: #333;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .home-btn:hover {
+            background-color: #555;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>1 Samuel Levels</h1>
+    <div class="levels-grid" id="levels-grid">
+        <!-- Levels will be injected here by JS -->
+    </div>
+    <a href="OT.html" class="home-btn">Back to Books</a>
+
+    <script>
+        window.currentBook = "1 Samuel";
+    </script>
+    <script src="jsfiles/1Samdata.js"></script>
+    <script src="jsfiles/Levels.js"></script>
+</body>
+
+</html>

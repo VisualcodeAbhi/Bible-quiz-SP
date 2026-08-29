@@ -1,0 +1,17 @@
+{
+	"appId": "com.telugubiblequiz.app",
+	"appName": "Telugu Bible Quiz",
+	"webDir": "dist",
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 0,
+			"launchAutoHide": true,
+			"backgroundColor": "#001f3f",
+			"androidSplashResourceName": "splash",
+			"showSpinner": false,
+			"androidScaleType": "CENTER_CROP",
+			"splashFullScreen": true,
+			"splashImmersive": true
+		}
+	}
+}

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telugu Bible Quiz - Home</title>
+    <!-- <link rel="stylesheet" href="style.css"> -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap');
+
+        /* Mobile-first styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(180deg, #001f3f 0%, #6a4bc2 100%);
+            /* Dark blue to purple gradient */
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+            /* Limit width on larger mobile screens */
+        }
+
+        .logo {
+            width: 200px;
+            /* Adjust based on actual logo aspect ratio */
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 32px;
+            line-height: 1.2;
+            margin: 0 0 60px 0;
+            /* Space between title and buttons */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 60%;
+            /* Buttons shouldn't be too wide */
+        }
+
+        .action-btn {
+            background-color: white;
+            color: black;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            /* Pill shape */
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.1s;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        .btn-main-text {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 2px;
+        }
+
+        .btn-sub-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000;
+        }
+
+        @media (min-width: 769px) {
+
+            /* Hide everything except .img container */
+            body *:not(.img):not(.img *) {
+                display: none !important;
+            }
+
+            /* Make .img container visible */
+            .img {
+                display: block !important;
+                text-align: center;
+                margin: auto;
+                width: 100%;
+                font-size: 70px;
+                color: black;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <img src="images/Logo1.png" alt="Telugu Bible Quiz Logo" class="logo">
+        <h1>Telugu<br>Bible Quiz</h1><br>
+
+        <div class="btn-group">
+            <button class="action-btn" onclick="location.href='OT.html'">
+                <span class="btn-main-text">పాత నిబంధన</span>
+                <span class="btn-sub-text">Old Testament</span>
+            </button>
+            <button class="action-btn" onclick="location.href='NT.html'">
+                <span class="btn-main-text">క్రొత్త నిబంధన</span>
+                <span class="btn-sub-text">New Testament</span>
+            </button>
+            <button class="action-btn" onclick="location.href='statistics.html'">
+                <span class="btn-main-text">గణాంకాలు</span>
+                <span class="btn-sub-text">Statistics</span>
+            </button>
+        </div>
+    </div>
+
+</body>
+
+</html>

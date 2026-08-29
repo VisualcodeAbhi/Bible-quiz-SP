@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        img {
+            display: block;
+            margin: auto;
+            max-width: 80%;
+            /* Adjusted for better look */
+            height: auto;
+        }
+
+        body {
+            background-color: rgb(0, 39, 75);
+            /* Fixed rgba syntax */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            /* Full viewport height */
+            font-size: 20px;
+            color: white;
+            margin: 0;
+            opacity: 1;
+            transition: opacity 1s ease-out;
+            /* Transition for fade out */
+        }
+
+        /* Class to trigger fade out */
+        body.fade-out {
+            opacity: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <img src="images/Logo.png" alt="Logo">
+
+    <script>
+        // Wait for 2 seconds, then fade out, then redirect
+        setTimeout(() => {
+            document.body.classList.add('fade-out');
+
+            // Wait for the transition (1s) to finish before redirecting
+            setTimeout(() => {
+                window.location.href = 'home.html';
+            }, 1000);
+        }, 2000);
+    </script>
+</body>
+
+</html>

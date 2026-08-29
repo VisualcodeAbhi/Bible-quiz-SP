@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="te">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bible Quiz</title>
+    <link rel="stylesheet" href="quiz.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Mandali&display=swap"
+        rel="stylesheet">
+    <!-- Mandali is a good font for Telugu -->
+</head>
+
+<body>
+    <div class="quiz-container" id="quiz-container">
+        <div class="header">
+            <div class="back-arrow" id="back-arrow">&#8592;</div>
+            <div class="title-container">
+                <h1 id="book-title">Genesis</h1>
+                <div class="chapter-info" id="chapter-info">Chapter 1/5</div>
+            </div>
+            <div class="timer-circle">
+                <span id="timer">30</span>
+            </div>
+        </div>
+
+        <div class="icon-container">
+            <img src="images/Logo1.png" alt="Bible Quiz Logo" class="quiz-icon">
+        </div>
+
+        <div class="question-box">
+            <p id="question-text">Loading...</p>
+        </div>
+
+        <div class="options-container" id="options-container">
+            <!-- Options will be injected by JS -->
+        </div>
+
+        <button class="next-btn" id="next-btn" style="display: none;">Next</button>
+    </div>
+
+    <!-- Scoreboard Section (Hidden by default) -->
+    <div class="scoreboard-container" id="scoreboard-container" style="display: none;">
+        <div class="icon-container">
+            <img src="images/Logo.png" alt="Bible Quiz Logo" class="quiz-icon">
+        </div>
+        <h2>Level Completed!</h2>
+        <div class="score-display">
+            Your Score: <span id="score">0</span>/5
+        </div><br>
+        <button class="next-btn" id="next-level-btn">Go Next Level</button><br>
+        <button class="next-btn" id="go-home-btn">Go Home</button>
+    </div>
+
+    <!-- Feedback Overlay -->
+    <div id="feedback-overlay" class="feedback-overlay"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Script loading handled by quiz.js -->
+    <script src="jsfiles/quiz.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics</title>
+    <!-- <link rel="stylesheet" href="style.css"> -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@700&family=Mandali&display=swap');
+
+        /* Mobile-first styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(180deg, #001f3f 0%, #4b3ca3 100%);
+            /* Approximate gradient */
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .menu-icon {
+            font-size: 30px;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            flex-grow: 1;
+            text-align: center;
+            padding-right: 30px;
+        }
+
+        .stats-container {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #ffd700;
+            /* Gold */
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .stat-sub {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .img {
+            display: none;
+        }
+
+        @media (min-width: 769px) {
+
+            /* Hide everything except .img container */
+            body *:not(.img):not(.img *) {
+                display: none !important;
+            }
+
+            /* Make .img container visible */
+            .img {
+                display: block !important;
+                text-align: center;
+                margin: auto;
+                width: 100%;
+                font-size: 70px;
+                color: black;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="img">This webpage is designed to work on small devices only </div>
+
+    <div class="mobile-content">
+        <header>
+            <div class="menu-icon" onclick="window.location.href='home.html'">&#8592;</div> <!-- Back Arrow -->
+            <h1>Statistics</h1>
+        </header>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <div class="stat-title">Total Progress</div>
+                <div class="stat-value" id="total-progress">0%</div>
+                <div class="stat-sub">Books Completed</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-title">Old Testament</div>
+                <div class="stat-value" id="ot-progress">0/39</div>
+                <div class="stat-sub">Books</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-title">New Testament</div>
+                <div class="stat-value" id="nt-progress">0/27</div>
+                <div class="stat-sub">Books</div>
+            </div>
+
+            <button onclick="resetProgress()"
+                style="padding: 15px; background: #ff4444; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer;">Reset
+                All Progress</button>
+        </div>
+    </div>
+
+    <script>
+        // Use default_api or standard JS to fetch and calculate stats
+        // Since we are using localStorage for 'bibleQuizProgress', we can read it here.
+
+        function loadStats() {
+            const userProgress = JSON.parse(localStorage.getItem('bibleQuizProgress')) || {};
+            let totalChaptersCompleted = 0;
+            // This is a simplified calculation. Ideally we'd know total chapters in the bible.
+            // For now, let's just count keys in userProgress that have 'completed: true'
+
+            // Actually, userProgress structure is { "Genesis": { "1": {completed: true, score: 5}, ... }, ... }
+
+            let booksStarted = Object.keys(userProgress).length;
+
+            // Logic to separate OT and NT counts would need a predefined list of books.
+            // For now, simply showing "Books Started" might be safer or placeholders.
+
+            document.getElementById('ot-progress').innerText = `${booksStarted}`;
+            document.getElementById('ot-progress').nextElementSibling.innerText = "Books Started";
+
+            // We can improve this if we have the full bibleData available or a list of books.
+        }
+
+        function resetProgress() {
+            if (confirm("Are you sure you want to reset all your progress? This cannot be undone.")) {
+                localStorage.removeItem('bibleQuizProgress');
+                location.reload();
+            }
+        }
+
+        loadStats();
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,84 @@
+.restriction-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    /* Deep, premium dark gradient */
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 20000;
+    text-align: center;
+    padding: 2.5rem;
+    font-family: 'Roboto', sans-serif;
+    backdrop-filter: blur(10px);
+    /* Glassmorphism effect */
+    animation: fadeIn 0.5s ease-out;
+}
+
+.restriction-content {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 3rem;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    max-width: 600px;
+}
+
+.restriction-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    color: #ffc107;
+    /* Gold accent */
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-weight: 700;
+}
+
+.restriction-content p {
+    font-size: 1.25rem;
+    line-height: 1.6;
+    color: #e0e0e0;
+}
+
+.phone-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    display: block;
+    animation: shake 2s infinite;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes shake {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: rotate(-10deg);
+    }
+
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: rotate(10deg);
+    }
+}

@@ -1,0 +1,265 @@
+{
+  "chapters": 5,
+  "levels": {
+    "1": [
+      {
+        "question": "With whom does the genealogy of Jesus Christ begin in Matthew?",
+        "options": [
+          "Solomon",
+          "Abraham",
+          "David",
+          "Adam"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "To whom was Mary pledged to be married?",
+        "options": [
+          "Zechariah",
+          "John",
+          "Simeon",
+          "Joseph"
+        ],
+        "correct": 3
+      },
+      {
+        "question": "What did Joseph intend to do when he found Mary was pregnant?",
+        "options": [
+          "Have her stoned",
+          "Send her away publicly",
+          "Divorce her quietly",
+          "Marry her immediately"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What name did the angel tell Joseph to give the baby?",
+        "options": [
+          "Jesus",
+          "Immanuel",
+          "John",
+          "David"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "What does Immanuel mean?",
+        "options": [
+          "God's servant",
+          "God's salvation",
+          "Son of God",
+          "God with us"
+        ],
+        "correct": 3
+      }
+    ],
+    "2": [
+      {
+        "question": "Where was Jesus born?",
+        "options": [
+          "Bethlehem in Judea",
+          "Jerusalem",
+          "Galilee",
+          "Nazareth"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "Who came from the east to worship Jesus?",
+        "options": [
+          "Herod",
+          "Priests",
+          "Magi (Wise Men)",
+          "Prophets"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What gifts did the Magi present to Jesus?",
+        "options": [
+          "Cattle",
+          "Gold, Frankincense, and Myrrh",
+          "Silver and Clothes",
+          "Money"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Who did Herod order to be killed?",
+        "options": [
+          "All shepherds",
+          "All male children two years old and under",
+          "The Wise Men",
+          " Priests"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Where did Joseph take Mary and Jesus to escape Herod?",
+        "options": [
+          "Nazareth",
+          "Jerusalem",
+          "Samaria",
+          "Egypt"
+        ],
+        "correct": 3
+      }
+    ],
+    "3": [
+      {
+        "question": "Where did John the Baptist preach?",
+        "options": [
+          "In the palace",
+          "By the sea",
+          "In the Wilderness of Judea",
+          "In the Temple"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What was John's food?",
+        "options": [
+          "Locusts and wild honey",
+          "Bread and wine",
+          "Meat",
+          "Fruit"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "Who said, 'Repent, for the kingdom of heaven is near'?",
+        "options": [
+          "Paul",
+          "Jesus",
+          "Peter",
+          "John the Baptist"
+        ],
+        "correct": 3
+      },
+      {
+        "question": "By whom was Jesus baptized?",
+        "options": [
+          "John",
+          "James",
+          "High Priest",
+          "Peter"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "In what form did the Spirit descend on Jesus?",
+        "options": [
+          "Like fire",
+          "Like water",
+          "Like a dove",
+          "Like wind"
+        ],
+        "correct": 2
+      }
+    ],
+    "4": [
+      {
+        "question": "How many days did Jesus fast in the wilderness?",
+        "options": [
+          "7 days",
+          "40 days",
+          "3 days",
+          "12 days"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What did the devil tempt Jesus to turn stones into?",
+        "options": [
+          "Fruit",
+          "Bread",
+          "Gold",
+          "Water"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Man shall not live by bread alone, but by...?",
+        "options": [
+          "Water",
+          "Meat",
+          "Every word that comes from the mouth of God",
+          "Sunlight"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Who did Jesus call by the Sea of Galilee?",
+        "options": [
+          "Matthew",
+          "Judas",
+          "Peter and Andrew",
+          "James and John"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Jesus said, 'I will make you fishers of...'?",
+        "options": [
+          "Men",
+          "Fish",
+          "Wealth",
+          "Wisdom"
+        ],
+        "correct": 0
+      }
+    ],
+    "5": [
+      {
+        "question": "Why are the poor in spirit blessed?",
+        "options": [
+          "For theirs is the kingdom of heaven",
+          "For they will inherit the earth",
+          "For they will be comforted",
+          "For they will be filled"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "You are the ___ of the earth.",
+        "options": [
+          "Salt",
+          "King",
+          "Friend",
+          "Servant"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "I have not come to abolish the Law but to...?",
+        "options": [
+          "Change it",
+          "Write a new one",
+          "Fulfill it",
+          "Remove it"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What should you do to your enemies?",
+        "options": [
+          "Hate them",
+          "Love them",
+          "Punish them",
+          "Ignore them"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Be perfect, therefore, as your ___ is perfect.",
+        "options": [
+          "Angels",
+          "Heavenly Father",
+          "Kings",
+          "Prophets"
+        ],
+        "correct": 1
+      }
+    ]
+  }
+}

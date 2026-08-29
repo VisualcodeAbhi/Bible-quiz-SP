@@ -1,0 +1,36 @@
+{
+  "name": "bible-quiz-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@capacitor-community/admob": "^7.2.0",
+    "@capacitor/android": "^8.0.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/cli": "^8.0.0",
+    "@capacitor/core": "^8.0.0",
+    "@capacitor/toast": "^8.0.0",
+    "@supabase/supabase-js": "^2.87.1",
+    "firebase": "^12.6.0",
+    "lottie-react": "^2.4.1",
+    "react": "^19.2.1",
+    "react-confetti": "^6.4.0",
+    "react-dom": "^19.2.1",
+    "react-router-dom": "^7.10.1",
+    "vite-plugin-pwa": "^1.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@vitejs/plugin-basic-ssl": "^2.1.0",
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^6.4.1"
+  }
+}

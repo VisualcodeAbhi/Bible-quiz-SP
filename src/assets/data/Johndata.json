@@ -1,0 +1,265 @@
+{
+  "chapters": 5,
+  "levels": {
+    "1": [
+      {
+        "question": "In the beginning was the Word, and the Word was with God, and the Word was...",
+        "options": [
+          "A Prophet",
+          "An Angel",
+          "God",
+          "King"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What was made by Him?",
+        "options": [
+          "Some things",
+          "Only heaven",
+          "All things",
+          "Nothing"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Who was sent to bear witness of the Light?",
+        "options": [
+          "Peter",
+          "John (the Baptist)",
+          "Paul",
+          "Isaiah"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What did John call Jesus?",
+        "options": [
+          "The Lamb of God",
+          "The Lion",
+          "The King",
+          "The Prophet"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "Who brought Simon Peter to Jesus?",
+        "options": [
+          "James",
+          "John",
+          "Andrew",
+          "Philip"
+        ],
+        "correct": 2
+      }
+    ],
+    "2": [
+      {
+        "question": "Where was the marriage taking place?",
+        "options": [
+          "Capernaum",
+          "Jerusalem",
+          "Cana of Galilee",
+          "Nazareth"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What did Jesus turn water into?",
+        "options": [
+          "Milk",
+          "Wine",
+          "Honey",
+          "Oil"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What did Jesus make to drive people out of the temple?",
+        "options": [
+          "A sword",
+          "A scourge of small cords",
+          "A club",
+          "A shield"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Destroy this temple, and in how many days will I raise it up?",
+        "options": [
+          "Seven",
+          "Three",
+          "One",
+          "Forty"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What temple was He speaking of?",
+        "options": [
+          "Solomon's temple",
+          "Herod's temple",
+          "The temple of His body",
+          "A spiritual temple"
+        ],
+        "correct": 2
+      }
+    ],
+    "3": [
+      {
+        "question": "Who came to Jesus by night?",
+        "options": [
+          "Peter",
+          "Nicodemus",
+          "Caiaphas",
+          "Pilate"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What must happen for a man to see the kingdom of God?",
+        "options": [
+          "Be born again",
+          "Do good works",
+          "Give money",
+          "Pray"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "Who is the 'one that loved the world'?",
+        "options": [
+          "Moses",
+          "God",
+          "Abraham",
+          "David"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Men loved darkness rather than light because...",
+        "options": [
+          "They were blind",
+          "Their deeds were evil",
+          "It was night",
+          "They were afraid"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "He must increase, but I must...",
+        "options": [
+          "Decrease",
+          "Die",
+          "Leave",
+          "Rule"
+        ],
+        "correct": 0
+      }
+    ],
+    "4": [
+      {
+        "question": "Where did Jesus sit by the well?",
+        "options": [
+          "Jerusalem",
+          "Sychar (Jacob's well)",
+          "Bethel",
+          "Jericho"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Who came to draw water?",
+        "options": [
+          "A man",
+          "A woman of Samaria",
+          "A Roman",
+          "A priest"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "God is a Spirit: and they that worship him must worship him in...",
+        "options": [
+          "Temple and church",
+          "Spirit and in truth",
+          "Silence",
+          "Loudness"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What food did Jesus have that the disciples knew not of?",
+        "options": [
+          "Bread from heaven",
+          "To do the will of Him that sent Me",
+          "Fruit",
+          "Fish"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What did Jesus say a prophet has in his own country?",
+        "options": [
+          "Great honor",
+          "No honor",
+          "Wealth",
+          "Friends"
+        ],
+        "correct": 1
+      }
+    ],
+    "5": [
+      {
+        "question": "Where was the pool with five porches?",
+        "options": [
+          "Siloam",
+          "Bethesda",
+          "Jordan",
+          "Galilee"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "How long had the man had an infirmity?",
+        "options": [
+          "12 years",
+          "38 years",
+          "40 years",
+          "10 years"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Why did the Jews persecute Jesus?",
+        "options": [
+          "He healed on the Sabbath",
+          "He stole",
+          "He lied",
+          "He fought"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "The Son can do nothing of himself, but what he seeth the ___ do.",
+        "options": [
+          "Mother",
+          "Priest",
+          "Father",
+          "Prophets"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Search the scriptures; for in them ye think ye have...",
+        "options": [
+          "Wealth",
+          "Power",
+          "Eternal life",
+          "History"
+        ],
+        "correct": 2
+      }
+    ]
+  }
+}

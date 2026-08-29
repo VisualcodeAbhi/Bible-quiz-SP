@@ -1,0 +1,265 @@
+{
+  "chapters": 5,
+  "levels": {
+    "1": [
+      {
+        "question": "How many souls of the house of Jacob came into Egypt?",
+        "options": [
+          "60",
+          "70",
+          "100",
+          "12"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What did the new king of Egypt fear about the Israelites?",
+        "options": [
+          "They were too poor",
+          "They were too few",
+          "They were more and mightier than the Egyptians",
+          "They were sick"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What cities did the Israelites build for Pharaoh?",
+        "options": [
+          "Pithom and Raamses",
+          "Cairo and Alexandria",
+          "Goshen and Succoth",
+          "Memphis and Thebes"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "What did the king of Egypt command the Hebrew midwives?",
+        "options": [
+          "Save the boys",
+          "Kill the sons, save the daughters",
+          "Kill everyone",
+          "Send them away"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Why did the midwives not do as the king commanded?",
+        "options": [
+          "They feared God",
+          "They liked the babies",
+          "They were bribed",
+          "They were afraid of the Israelites"
+        ],
+        "correct": 0
+      }
+    ],
+    "2": [
+      {
+        "question": "How long did the woman hide her baby son?",
+        "options": [
+          "1 month",
+          "3 months",
+          "6 months",
+          "1 year"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What did she put the child in?",
+        "options": [
+          "A wooden box",
+          "A golden cradle",
+          "An ark of bulrushes",
+          "A cloth bag"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Who found the baby?",
+        "options": [
+          "Pharaoh's daughter",
+          "A soldier",
+          "A midwife",
+          "A fisherman"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "Who did Pharaoh's daughter hire to nurse the child?",
+        "options": [
+          "An Egyptian woman",
+          "The child's mother",
+          "A servant",
+          "No one"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Where did Moses flee after killing the Egyptian?",
+        "options": [
+          "Canaan",
+          "Land of Midian",
+          "Red Sea",
+          "Wilderness"
+        ],
+        "correct": 1
+      }
+    ],
+    "3": [
+      {
+        "question": "What was Moses doing when he came to Horeb?",
+        "options": [
+          "Hunting",
+          "Keeping the flock of Jethro",
+          "Sleeping",
+          "Praying"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "How did the angel of the Lord appear to Moses?",
+        "options": [
+          "In a dream",
+          "In a flame of fire out of the midst of a bush",
+          "As a man",
+          "In a cloud"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Why did the bush not burn up?",
+        "options": [
+          "It was wet",
+          "It was magic",
+          "God's presence preserved it",
+          "It was a fake fire"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What is God's name as revealed to Moses?",
+        "options": [
+          "The Almighty",
+          "I AM THAT I AM",
+          " The Creator",
+          "The King"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Where did God promise to bring the Israelites?",
+        "options": [
+          "Back to Egypt",
+          "To a land flowing with milk and honey",
+          "To the wilderness",
+          "To the sea"
+        ],
+        "correct": 1
+      }
+    ],
+    "4": [
+      {
+        "question": "What happened to Moses' rod when he cast it on the ground?",
+        "options": [
+          "It broke",
+          "It became a serpent",
+          "It flowered",
+          "Nothing"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What happened to Moses' hand when he put it in his bosom?",
+        "options": [
+          "It was burned",
+          "It became leprous as snow",
+          "It was healed",
+          "It turned black"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "Who did God appoint as Moses' spokesman?",
+        "options": [
+          "Jethro",
+          "Hur",
+          "Aaron",
+          "Joshua"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Did Moses feel eloquent in speech?",
+        "options": [
+          "Yes",
+          "No, he was slow of speech",
+          "Sometimes",
+          "He didn't care"
+        ],
+        "correct": 1
+      },
+      {
+        "question": "What did Zipporah do to her son?",
+        "options": [
+          "Blessed him",
+          "Circumcised him",
+          "Hid him",
+          "Fed him"
+        ],
+        "correct": 1
+      }
+    ],
+    "5": [
+      {
+        "question": "Who said, 'Who is the Lord, that I should obey his voice?'",
+        "options": [
+          "Moses",
+          "Start",
+          "Pharaoh",
+          "Aaron"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "What burden did Pharaoh add to the Israelites?",
+        "options": [
+          "Gather their own straw for bricks",
+          "Work at night",
+          "Pay more taxes",
+          "Build more cities"
+        ],
+        "correct": 0
+      },
+      {
+        "question": "Did the number of bricks required change?",
+        "options": [
+          "Yes, it increased",
+          "Yes, it decreased",
+          "No, it remained the same",
+          "They stopped making bricks"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Who did the officers of Israel blame for their trouble?",
+        "options": [
+          "Pharaoh",
+          "Themselves",
+          "Moses and Aaron",
+          "God"
+        ],
+        "correct": 2
+      },
+      {
+        "question": "Why did Moses return to the Lord?",
+        "options": [
+          "To complain that God had not delivered His people",
+          "To thank Him",
+          "To offer a sacrifice",
+          "To quit"
+        ],
+        "correct": 0
+      }
+    ]
+  }
+}
