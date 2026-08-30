@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", isDanger = false, showCancel = true }) => {
+const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText = "Confirm", cancelText = "Cancel", isDanger = false, showCancel = true, icon = null }) => {
     if (!isOpen) return null;
 
     return (
@@ -34,7 +34,7 @@ const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel, confirmText
                     fontSize: '40px',
                     marginBottom: '15px'
                 }}>
-                    {isDanger ? '⚠️' : '❓'}
+                    {icon ? icon : (isDanger ? '⚠️' : '❓')}
                 </div>
 
                 <h2 style={{

@@ -68,7 +68,15 @@ const Store = () => {
                 if (newCount >= 5) {
                     activateInfiniteLives(30);
                     setProgress30(0);
-                    await Toast.show({ text: '🎉 Reward Unlocked: 30 Mins Infinite Lives!', duration: 'long' });
+                    setModalConfig({
+                        isOpen: true,
+                        title: "🎉 Congratulations!",
+                        message: "You completed all 5 ads! 30 Minutes of Infinite Lives is now active. Enjoy playing without losing lives!",
+                        confirmText: "Awesome!",
+                        icon: "🎉",
+                        showCancel: false,
+                        onConfirm: closeModal
+                    });
                 } else {
                     setProgress30(newCount);
                     await Toast.show({ text: `Great! ${newCount}/5 Ads Watched.`, duration: 'short' });
@@ -78,7 +86,15 @@ const Store = () => {
                 if (newCount >= 10) {
                     activateInfiniteLives(60);
                     setProgress60(0);
-                    await Toast.show({ text: '🎉 Reward Unlocked: 1 Hour Infinite Lives!', duration: 'long' });
+                    setModalConfig({
+                        isOpen: true,
+                        title: "🎉 Congratulations!",
+                        message: "You completed all 10 ads! 1 Hour of Infinite Lives is now active. Enjoy uninterrupted quiz time!",
+                        confirmText: "Awesome!",
+                        icon: "🎉",
+                        showCancel: false,
+                        onConfirm: closeModal
+                    });
                 } else {
                     setProgress60(newCount);
                     await Toast.show({ text: `Great! ${newCount}/10 Ads Watched.`, duration: 'short' });
@@ -88,7 +104,15 @@ const Store = () => {
                 if (newCount >= 5) {
                     addHints(6);
                     setAdsWatchedHints(0);
-                    await Toast.show({ text: '🎉 Reward Unlocked: 6 Hints Added!', duration: 'long' });
+                    setModalConfig({
+                        isOpen: true,
+                        title: "🎉 Congratulations!",
+                        message: "You completed all 5 ads! 6 Bonus Hints have been added to your account.",
+                        confirmText: "Awesome!",
+                        icon: "💡",
+                        showCancel: false,
+                        onConfirm: closeModal
+                    });
                 } else {
                     setAdsWatchedHints(newCount);
                     await Toast.show({ text: `Great! ${newCount}/5 Ads Watched.`, duration: 'short' });
@@ -344,6 +368,8 @@ const Store = () => {
                 onConfirm={modalConfig.onConfirm}
                 onCancel={closeModal}
                 confirmText={modalConfig.confirmText}
+                showCancel={modalConfig.showCancel !== undefined ? modalConfig.showCancel : true}
+                icon={modalConfig.icon}
             />
         </div>
     );

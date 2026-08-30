@@ -27,6 +27,30 @@ export const GameProvider = ({ children }) => {
     const [session, setSession] = useState(null);
     const [isCloudLoaded, setIsCloudLoaded] = useState(false);
 
+    // Helper: Reset all in-memory state and localStorage to fresh defaults
+    const clearAllLocalStateAndStorage = () => {
+        setLives(MAX_LIVES);
+        setNextRestoreTime(null);
+        setUserName("Guest");
+        setUserPhoto(null);
+        setNameLocked(false);
+        setHints(5);
+        setInfiniteLivesUntil(null);
+        setProgress({});
+        setIsCloudLoaded(false);
+        setSession(null);
+
+        localStorage.removeItem('bibleQuiz_sessionToken');
+        localStorage.removeItem('bibleQuiz_lives');
+        localStorage.removeItem('bibleQuiz_restoreTime');
+        localStorage.removeItem('bibleQuiz_userName');
+        localStorage.removeItem('bibleQuiz_userPhoto');
+        localStorage.removeItem('bibleQuiz_nameLocked');
+        localStorage.removeItem('bibleQuiz_hints');
+        localStorage.removeItem('bibleQuiz_infiniteLivesUntil');
+        localStorage.removeItem('bibleQuizProgress');
+    };
+
     // --- Loading & Initial Sync ---
     useEffect(() => {
         // 1. Load LocalStorage First (Instant UI)
@@ -59,18 +83,18 @@ export const GameProvider = ({ children }) => {
 
         // 2. Check Session
         supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            if (session) syncFullState(session.user.id);
+            if (session) {
+                setSession(session);
+                syncFullState(session.user.id);
+            }
         });
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            if (session) {
-                // User logged in - Sync!
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' || !session) {
+                clearAllLocalStateAndStorage();
+            } else if (session) {
+                setSession(session);
                 syncFullState(session.user.id);
-            } else {
-                // User logged out - stop syncing but keep local data (or clear? usually keep for guest)
-                setIsCloudLoaded(false);
             }
         });
 
@@ -106,9 +130,8 @@ export const GameProvider = ({ children }) => {
         };
     }, [session]);
 
-    // --- Helper: Deep Merge & Sync ---
+    // --- Helper: State Sync strictly from Cloud Profile ---
     const syncFullState = async (userId) => {
-        // Sync state from Cloud to Local
         try {
             const { data, error } = await supabase
                 .from('profiles')
@@ -119,96 +142,54 @@ export const GameProvider = ({ children }) => {
             let cloud = data?.game_data || {};
 
             // --- SINGLE DEVICE LOGIN ENFORCEMENT ---
-            // 1. Get my local session token (created on login/first load)
             let localToken = localStorage.getItem('bibleQuiz_sessionToken');
             const cloudToken = cloud.active_session_token;
 
             if (!localToken) {
-                // New Login on this device: Create a token and Claim the session
+                // New Login on this device: Create token and claim session
                 localToken = Date.now().toString() + "_" + Math.random().toString(36).substr(2, 9);
                 localStorage.setItem('bibleQuiz_sessionToken', localToken);
 
-                // Save immediately to Cloud (inside game_data)
-                // We merge with existing cloud data so we don't lose progress if it exists
                 const newGameData = { ...cloud, active_session_token: localToken };
                 await supabase.from('profiles').upsert({ id: userId, game_data: newGameData, updated_at: new Date() });
-
-                cloud = newGameData; // Update local ref
-
+                cloud = newGameData;
             } else if (cloudToken && cloudToken !== localToken) {
-                // CONFLICT DETECTED: Valid Cloud Token exists, but it doesn't match my Local Token.
-                // SHOW MODAL INSTEAD OF ALERT
+                // Conflict detected: Another device is logged in
                 setShowLogoutModal(true);
-                return; // Stop loading
+                return;
             }
 
-            // Self-repair: If cloud has no token, claim it (e.g. legacy data)
             if (!cloudToken && localToken) {
                 const newGameData = { ...cloud, active_session_token: localToken };
                 await supabase.from('profiles').upsert({ id: userId, game_data: newGameData, updated_at: new Date() });
                 cloud = newGameData;
             }
-            // ---------------------------------------
+
+            // Set state strictly from this user's cloud data (preventing leak from previous user)
+            const cloudLives = cloud.lives !== undefined ? cloud.lives : MAX_LIVES;
+            setLives(cloudLives);
+            setNextRestoreTime(cloud.nextRestoreTime || null);
+            setHints(cloud.hints !== undefined ? cloud.hints : 5);
+            setUserName(cloud.userName || "Guest");
+            setUserPhoto(cloud.userPhoto || null);
+            setNameLocked(!!cloud.nameLocked);
+            setProgress(cloud.progress || {});
+
+            if (cloud.infiniteLivesUntil) {
+                const infiniteTime = parseInt(cloud.infiniteLivesUntil, 10);
+                if (!isNaN(infiniteTime) && infiniteTime > Date.now()) {
+                    setInfiniteLivesUntil(infiniteTime);
+                } else {
+                    setInfiniteLivesUntil(null);
+                }
+            } else {
+                setInfiniteLivesUntil(null);
+            }
 
             setIsCloudLoaded(true);
 
-            // ... Start Merge Logic ...
-            // INTELLIGENT MERGE LOGIC
-            // 1. Lives: Take the LOWER value to prevent exploiting guest reset.
-            // If cloud has fewer lives, use cloud. If local has fewer (played offline), keep local.
-            const cloudLives = cloud.lives !== undefined ? cloud.lives : MAX_LIVES;
-
-            setLives(prev => {
-                if (cloudLives < prev) {
-                    // Cloud has fewer lives, adopt cloud state including timer
-                    if (cloud.nextRestoreTime) setNextRestoreTime(cloud.nextRestoreTime);
-                    return cloudLives;
-                }
-                return prev;
-            });
-
-            // 2. Hints: Accumulate or Max? Let's take Max to prevent farming by clear-data
-            setHints(prev => Math.max(prev, cloud.hints || 0));
-
-            // 3. Profile: Cloud wins if set, otherwise keep local guest name
-            if (cloud.userName && cloud.userName !== "Guest") setUserName(cloud.userName);
-            if (cloud.userPhoto) setUserPhoto(cloud.userPhoto);
-
-            // 4. Progress: Deep Merge
-            // We want to combine unlocked levels.
-            setProgress(prev => {
-                const merged = { ...prev };
-                if (cloud.progress) {
-                    Object.keys(cloud.progress).forEach(book => {
-                        if (!merged[book]) merged[book] = {};
-                        const cloudBook = cloud.progress[book];
-                        Object.keys(cloudBook).forEach(level => {
-                            // If cloud has this level completed/data, use it if local doesn't have it
-                            // Or if cloud score is better? For now just existence
-                            if (!merged[book][level] || (cloudBook[level].score > merged[book][level].score)) {
-                                merged[book][level] = cloudBook[level];
-                            }
-                        });
-                    });
-                }
-                return merged;
-            });
-
-            // 5. Infinite Lives: Restore max expiry time
-            if (cloud.infiniteLivesUntil) {
-                setInfiniteLivesUntil(prev => {
-                    const cloudTime = parseInt(cloud.infiniteLivesUntil, 10);
-                    if (!isNaN(cloudTime) && cloudTime > Date.now()) {
-                        // Keep whichever lasts longer
-                        return prev ? Math.max(prev, cloudTime) : cloudTime;
-                    }
-                    return prev;
-                });
-            }
-
         } catch (err) {
             console.error("Error syncing:", err);
-            // Profile might not exist, that's fine. We will create it on next save.
         }
     };
 
@@ -408,20 +389,8 @@ export const GameProvider = ({ children }) => {
 
     const handleLogoutConfirm = async () => {
         setShowLogoutModal(false);
-        // Clear local data effectively
-        localStorage.removeItem('bibleQuiz_sessionToken');
-        localStorage.removeItem('bibleQuiz_lives');
-        localStorage.removeItem('bibleQuiz_restoreTime');
-        localStorage.removeItem('bibleQuiz_userName');
-        localStorage.removeItem('bibleQuiz_userPhoto');
-        localStorage.removeItem('bibleQuiz_nameLocked');
-        localStorage.removeItem('bibleQuiz_hints');
-        localStorage.removeItem('bibleQuiz_infiniteLivesUntil');
-        localStorage.removeItem('bibleQuizProgress');
-
-        // Call logout
+        clearAllLocalStateAndStorage();
         await supabase.auth.signOut();
-
         window.location.href = '/auth';
     };
 
