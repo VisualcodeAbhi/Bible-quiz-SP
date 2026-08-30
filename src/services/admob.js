@@ -8,7 +8,7 @@ import {
 
 // Set to true for Debugging & Testing on device (guarantees 100% ad fill without policy violations)
 // Set to false for Production release on Google Play Store
-export const USE_TEST_ADS = true;
+export const USE_TEST_ADS = false;
 
 // Google Official Test Ad Unit IDs
 const GOOGLE_TEST_BANNER = 'ca-app-pub-3940256099942544/6300978111';
