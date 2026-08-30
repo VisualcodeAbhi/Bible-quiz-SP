@@ -90,9 +90,15 @@ const Home = () => {
             if (diff <= 0) {
                 setInfiniteTimeLeft("");
             } else {
-                const minutes = Math.floor(diff / 60000);
-                const seconds = Math.floor((diff % 60000) / 1000);
-                setInfiniteTimeLeft(`${minutes}m ${seconds}s`);
+                const totalSec = Math.floor(diff / 1000);
+                const hours = Math.floor(totalSec / 3600);
+                const minutes = Math.floor((totalSec % 3600) / 60);
+                const seconds = totalSec % 60;
+                if (hours > 0) {
+                    setInfiniteTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+                } else {
+                    setInfiniteTimeLeft(`${minutes}m ${seconds}s`);
+                }
             }
         }, 1000);
         return () => clearInterval(interval);
@@ -431,13 +437,16 @@ const Home = () => {
                 <h1>Bible Quiz</h1>
                 <div className="btn-group">
                     <button className="action-btn" onClick={() => navigate('/ot')}>
-                        <span className="btn-main-text">Old Testament</span>
+                        <span className="btn-main-text">పాత నిబంధన</span>
+                        <span className="btn-eng-text">Old Testament</span>
                     </button>
                     <button className="action-btn" onClick={() => navigate('/nt')}>
-                        <span className="btn-main-text">New Testament</span>
+                        <span className="btn-main-text">కొత్త నిబంధన</span>
+                        <span className="btn-eng-text">New Testament</span>
                     </button>
                     <button className="action-btn" onClick={() => navigate('/statistics')}>
-                        <span className="btn-main-text">Statistics</span>
+                        <span className="btn-main-text">గణాంకాలు</span>
+                        <span className="btn-eng-text">Statistics</span>
                     </button>
                 </div>
 

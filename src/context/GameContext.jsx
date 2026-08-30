@@ -316,7 +316,12 @@ export const GameProvider = ({ children }) => {
     };
 
     const activateInfiniteLives = (durationMinutes = 60) => {
-        setInfiniteLivesUntil(Date.now() + (durationMinutes * 60 * 1000));
+        const addedMs = durationMinutes * 60 * 1000;
+        setInfiniteLivesUntil(prev => {
+            const now = Date.now();
+            const baseTime = (prev && prev > now) ? prev : now;
+            return baseTime + addedMs;
+        });
         setLives(MAX_LIVES);
         setNextRestoreTime(null);
     };
