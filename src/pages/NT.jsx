@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { bookNameMap } from '../bookNames';
 
 const books = [
     { id: 'Matthew', name: 'Matthew', file: 'Matthewdata' },
@@ -59,7 +60,7 @@ const NewTestament = () => {
                             key={book.id}
                             className="book-link box"
                         >
-                            {book.name}
+                            {bookNameMap[book.name] || book.name}
                         </Link>
                     ))}
                 </div>
