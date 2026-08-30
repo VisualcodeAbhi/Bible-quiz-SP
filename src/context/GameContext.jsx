@@ -157,13 +157,15 @@ export const GameProvider = ({ children }) => {
             await supabase.from('profiles').upsert({ id: userId, game_data: newGameData, updated_at: new Date() });
 
             // 4. Determine clean user profile values (strictly for this account)
+            const storedLocalName = localStorage.getItem('bibleQuiz_userName');
             const defaultName = activeSession?.user?.user_metadata?.display_name || activeSession?.user?.email?.split('@')[0] || "Player";
             const userLives = cloud.lives !== undefined ? cloud.lives : MAX_LIVES;
             const userRestoreTime = cloud.nextRestoreTime || null;
             const userHints = cloud.hints !== undefined ? cloud.hints : 5;
-            const userProfileName = (cloud.userName && cloud.userName !== "Guest") ? cloud.userName : defaultName;
-            const userPhoto = cloud.userPhoto || null;
-            const userNameLocked = cloud.nameLocked !== undefined ? !!cloud.nameLocked : false;
+            const userProfileName = (cloud.userName && cloud.userName !== "Guest") 
+                ? cloud.userName 
+                : (storedLocalName && storedLocalName !== "Guest" ? storedLocalName : defaultName);
+            const userPhoto = cloud.userPhoto || localStorage.getItem('bibleQuiz_userPhoto') || null;
             const userProgress = cloud.progress || {};
             const userInfinite = (cloud.infiniteLivesUntil && parseInt(cloud.infiniteLivesUntil, 10) > Date.now()) ? parseInt(cloud.infiniteLivesUntil, 10) : null;
 
@@ -173,7 +175,7 @@ export const GameProvider = ({ children }) => {
             setHints(userHints);
             setUserName(userProfileName);
             setUserPhoto(userPhoto);
-            setNameLocked(userNameLocked);
+            setNameLocked(false);
             setProgress(userProgress);
             setInfiniteLivesUntil(userInfinite);
 
@@ -184,7 +186,7 @@ export const GameProvider = ({ children }) => {
             localStorage.setItem('bibleQuiz_userName', userProfileName);
             if (userPhoto) localStorage.setItem('bibleQuiz_userPhoto', userPhoto);
             else localStorage.removeItem('bibleQuiz_userPhoto');
-            localStorage.setItem('bibleQuiz_nameLocked', userNameLocked);
+            localStorage.setItem('bibleQuiz_nameLocked', 'false');
             localStorage.setItem('bibleQuiz_hints', userHints);
             localStorage.setItem('bibleQuizProgress', JSON.stringify(userProgress));
             if (userInfinite) localStorage.setItem('bibleQuiz_infiniteLivesUntil', userInfinite);
@@ -341,12 +343,43 @@ export const GameProvider = ({ children }) => {
         setHints(h => h + amount);
     };
 
-    const updateProfile = (name, photo) => {
-        if (name && !nameLocked) {
-            setUserName(name);
-            setNameLocked(true);
+    const updateProfile = async (name, photo) => {
+        let updatedName = userName;
+        let updatedPhoto = userPhoto;
+
+        if (name && name.trim()) {
+            updatedName = name.trim();
+            setUserName(updatedName);
+            localStorage.setItem('bibleQuiz_userName', updatedName);
         }
-        if (photo) setUserPhoto(photo);
+        if (photo) {
+            updatedPhoto = photo;
+            setUserPhoto(photo);
+            localStorage.setItem('bibleQuiz_userPhoto', photo);
+        }
+
+        // Force Immediate Cloud Save
+        if (session) {
+            try {
+                const localToken = localStorage.getItem('bibleQuiz_sessionToken');
+                const { data } = await supabase.from('profiles').select('game_data').eq('id', session.user.id).single();
+                const existing = data?.game_data || {};
+                const updatedGameData = {
+                    ...existing,
+                    userName: updatedName,
+                    userPhoto: updatedPhoto,
+                    active_session_token: localToken,
+                    last_updated: Date.now()
+                };
+                await supabase.from('profiles').upsert({
+                    id: session.user.id,
+                    game_data: updatedGameData,
+                    updated_at: new Date()
+                });
+            } catch (e) {
+                console.error("Cloud profile save error:", e);
+            }
+        }
     };
 
     const addLife = () => {

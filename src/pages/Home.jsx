@@ -119,21 +119,23 @@ const Home = () => {
         }
     };
 
-    const saveName = () => {
-        updateProfile(editName, null);
+    const saveName = async () => {
+        if (editName && editName.trim()) {
+            await updateProfile(editName.trim(), null);
+        }
         setIsEditingName(false);
     };
 
-    const savePhoto = () => {
-        updateProfile(null, editPhoto);
+    const savePhoto = async () => {
+        if (editPhoto) {
+            await updateProfile(null, editPhoto);
+        }
         setIsEditingPhoto(false);
     };
 
     const openNameEdit = () => {
-        if (!nameLocked) {
-            setEditName(userName);
-            setIsEditingName(true);
-        }
+        setEditName(userName);
+        setIsEditingName(true);
     };
 
     const openPhotoEdit = () => {
