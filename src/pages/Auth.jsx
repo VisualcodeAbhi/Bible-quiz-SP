@@ -80,6 +80,18 @@ const Auth = () => {
 
         try {
             if (isLogin) {
+                // Clear any prior user's local cached data
+                localStorage.removeItem('bibleQuiz_userId');
+                localStorage.removeItem('bibleQuiz_sessionToken');
+                localStorage.removeItem('bibleQuiz_lives');
+                localStorage.removeItem('bibleQuiz_restoreTime');
+                localStorage.removeItem('bibleQuiz_userName');
+                localStorage.removeItem('bibleQuiz_userPhoto');
+                localStorage.removeItem('bibleQuiz_nameLocked');
+                localStorage.removeItem('bibleQuiz_hints');
+                localStorage.removeItem('bibleQuiz_infiniteLivesUntil');
+                localStorage.removeItem('bibleQuizProgress');
+
                 // --- LOGIN FLOW ---
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email,
@@ -88,9 +100,6 @@ const Auth = () => {
                 if (error) throw error;
 
                 // --- SILENT TAKEOVER (Last Login Wins) ---
-                // We do not check for existing session here. 
-                // We simply login, and GameContext will generate a new token,
-                // overwriting the old one and kicking out the previous device automatically.
                 navigate('/');
             } else {
                 // --- SIGN UP FLOW ---

@@ -40,6 +40,7 @@ export const GameProvider = ({ children }) => {
         setIsCloudLoaded(false);
         setSession(null);
 
+        localStorage.removeItem('bibleQuiz_userId');
         localStorage.removeItem('bibleQuiz_sessionToken');
         localStorage.removeItem('bibleQuiz_lives');
         localStorage.removeItem('bibleQuiz_restoreTime');
@@ -85,7 +86,7 @@ export const GameProvider = ({ children }) => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             if (session) {
                 setSession(session);
-                syncFullState(session.user.id);
+                syncFullState(session.user.id, session);
             }
         });
 
@@ -94,14 +95,14 @@ export const GameProvider = ({ children }) => {
                 clearAllLocalStateAndStorage();
             } else if (session) {
                 setSession(session);
-                syncFullState(session.user.id);
+                syncFullState(session.user.id, session);
             }
         });
 
         return () => subscription.unsubscribe();
     }, []);
 
-    // --- Realtime Session Check ---
+    // --- Realtime Session Check (Single Device Enforcement) ---
     useEffect(() => {
         if (!session?.user?.id) return;
 
@@ -119,6 +120,8 @@ export const GameProvider = ({ children }) => {
                     const newGameData = payload.new.game_data;
                     const localToken = localStorage.getItem('bibleQuiz_sessionToken');
                     if (newGameData && newGameData.active_session_token && newGameData.active_session_token !== localToken) {
+                        // Immediately wipe local data and notify user
+                        clearAllLocalStateAndStorage();
                         setShowLogoutModal(true);
                     }
                 }
@@ -131,9 +134,17 @@ export const GameProvider = ({ children }) => {
     }, [session]);
 
     // --- Helper: State Sync strictly from Cloud Profile ---
-    const syncFullState = async (userId) => {
+    const syncFullState = async (userId, currentAuthSession = null) => {
         try {
-            const { data, error } = await supabase
+            const activeSession = currentAuthSession || session;
+
+            // 1. Generate fresh session token for this device login (Takeover)
+            const localToken = Date.now().toString() + "_" + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('bibleQuiz_sessionToken', localToken);
+            localStorage.setItem('bibleQuiz_userId', userId);
+
+            // 2. Fetch existing cloud profile
+            const { data } = await supabase
                 .from('profiles')
                 .select('game_data')
                 .eq('id', userId)
@@ -141,53 +152,45 @@ export const GameProvider = ({ children }) => {
 
             let cloud = data?.game_data || {};
 
-            // --- SINGLE DEVICE LOGIN ENFORCEMENT ---
-            let localToken = localStorage.getItem('bibleQuiz_sessionToken');
-            const cloudToken = cloud.active_session_token;
+            // 3. Save new active session token to cloud
+            const newGameData = { ...cloud, active_session_token: localToken };
+            await supabase.from('profiles').upsert({ id: userId, game_data: newGameData, updated_at: new Date() });
 
-            if (!localToken) {
-                // New Login on this device: Create token and claim session
-                localToken = Date.now().toString() + "_" + Math.random().toString(36).substr(2, 9);
-                localStorage.setItem('bibleQuiz_sessionToken', localToken);
+            // 4. Determine clean user profile values (strictly for this account)
+            const defaultName = activeSession?.user?.user_metadata?.display_name || activeSession?.user?.email?.split('@')[0] || "Player";
+            const userLives = cloud.lives !== undefined ? cloud.lives : MAX_LIVES;
+            const userRestoreTime = cloud.nextRestoreTime || null;
+            const userHints = cloud.hints !== undefined ? cloud.hints : 5;
+            const userProfileName = (cloud.userName && cloud.userName !== "Guest") ? cloud.userName : defaultName;
+            const userPhoto = cloud.userPhoto || null;
+            const userNameLocked = cloud.nameLocked !== undefined ? !!cloud.nameLocked : false;
+            const userProgress = cloud.progress || {};
+            const userInfinite = (cloud.infiniteLivesUntil && parseInt(cloud.infiniteLivesUntil, 10) > Date.now()) ? parseInt(cloud.infiniteLivesUntil, 10) : null;
 
-                const newGameData = { ...cloud, active_session_token: localToken };
-                await supabase.from('profiles').upsert({ id: userId, game_data: newGameData, updated_at: new Date() });
-                cloud = newGameData;
-            } else if (cloudToken && cloudToken !== localToken) {
-                // Conflict detected: Another device is logged in
-                setShowLogoutModal(true);
-                return;
-            }
+            // 5. Update React State
+            setLives(userLives);
+            setNextRestoreTime(userRestoreTime);
+            setHints(userHints);
+            setUserName(userProfileName);
+            setUserPhoto(userPhoto);
+            setNameLocked(userNameLocked);
+            setProgress(userProgress);
+            setInfiniteLivesUntil(userInfinite);
 
-            if (!cloudToken && localToken) {
-                const newGameData = { ...cloud, active_session_token: localToken };
-                await supabase.from('profiles').upsert({ id: userId, game_data: newGameData, updated_at: new Date() });
-                cloud = newGameData;
-            }
-
-            // Set state strictly from this user's cloud data (preventing leak from previous user)
-            const cloudLives = cloud.lives !== undefined ? cloud.lives : MAX_LIVES;
-            setLives(cloudLives);
-            setNextRestoreTime(cloud.nextRestoreTime || null);
-            setHints(cloud.hints !== undefined ? cloud.hints : 5);
-            setUserName(cloud.userName || "Guest");
-            setUserPhoto(cloud.userPhoto || null);
-            setNameLocked(!!cloud.nameLocked);
-            setProgress(cloud.progress || {});
-
-            if (cloud.infiniteLivesUntil) {
-                const infiniteTime = parseInt(cloud.infiniteLivesUntil, 10);
-                if (!isNaN(infiniteTime) && infiniteTime > Date.now()) {
-                    setInfiniteLivesUntil(infiniteTime);
-                } else {
-                    setInfiniteLivesUntil(null);
-                }
-            } else {
-                setInfiniteLivesUntil(null);
-            }
+            // 6. Update LocalStorage strictly with this user's data
+            localStorage.setItem('bibleQuiz_lives', userLives);
+            if (userRestoreTime) localStorage.setItem('bibleQuiz_restoreTime', userRestoreTime);
+            else localStorage.removeItem('bibleQuiz_restoreTime');
+            localStorage.setItem('bibleQuiz_userName', userProfileName);
+            if (userPhoto) localStorage.setItem('bibleQuiz_userPhoto', userPhoto);
+            else localStorage.removeItem('bibleQuiz_userPhoto');
+            localStorage.setItem('bibleQuiz_nameLocked', userNameLocked);
+            localStorage.setItem('bibleQuiz_hints', userHints);
+            localStorage.setItem('bibleQuizProgress', JSON.stringify(userProgress));
+            if (userInfinite) localStorage.setItem('bibleQuiz_infiniteLivesUntil', userInfinite);
+            else localStorage.removeItem('bibleQuiz_infiniteLivesUntil');
 
             setIsCloudLoaded(true);
-
         } catch (err) {
             console.error("Error syncing:", err);
         }
