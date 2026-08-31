@@ -20,17 +20,25 @@ const Auth = () => {
 
 
 
-    // Detect Password Recovery Event (Link Clicked)
+    // Auto-redirect to Home if user is already logged in or logs in via Google OAuth
     useEffect(() => {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session && !isUpdatePassword) {
+                navigate('/', { replace: true });
+            }
+        });
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'PASSWORD_RECOVERY') {
                 setIsUpdatePassword(true);
                 setIsForgotPassword(false);
                 setIsLogin(false);
+            } else if (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+                navigate('/', { replace: true });
             }
         });
         return () => subscription.unsubscribe();
-    }, []);
+    }, [navigate, isUpdatePassword]);
 
 
 

@@ -103,7 +103,15 @@ function AppContent() {
                         return;
                     }
                 }
-                navigate('/auth');
+
+                // If user is already authenticated after Google redirect, go straight to Home
+                const { supabase } = await import('./lib/supabaseClient');
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    navigate('/', { replace: true });
+                } else {
+                    navigate('/auth', { replace: true });
+                }
             }
         });
     }, [navigate]);
