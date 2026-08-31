@@ -81,12 +81,28 @@ function AppContent() {
         }
     }, [location.pathname]);
 
-    // Deep Link Handler
+    // Deep Link Handler for Google OAuth & App Links
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return;
-        CapacitorApp.addListener('appUrlOpen', data => {
-            // data.url contains the URL that opened the app
-            if (data.url.includes('biblequiz://auth')) {
+        CapacitorApp.addListener('appUrlOpen', async (data) => {
+            if (!data.url) return;
+            // Catch biblequiz://auth or oauth callbacks
+            if (data.url.includes('biblequiz://')) {
+                if (data.url.includes('#access_token=') || data.url.includes('?access_token=')) {
+                    const separator = data.url.includes('#') ? '#' : '?';
+                    const params = new URLSearchParams(data.url.split(separator)[1]);
+                    const accessToken = params.get('access_token');
+                    const refreshToken = params.get('refresh_token');
+                    if (accessToken && refreshToken) {
+                        const { supabase } = await import('./lib/supabaseClient');
+                        await supabase.auth.setSession({
+                            access_token: accessToken,
+                            refresh_token: refreshToken
+                        });
+                        navigate('/', { replace: true });
+                        return;
+                    }
+                }
                 navigate('/auth');
             }
         });

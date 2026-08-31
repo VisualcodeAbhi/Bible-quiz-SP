@@ -157,15 +157,19 @@ export const GameProvider = ({ children }) => {
             await supabase.from('profiles').upsert({ id: userId, game_data: newGameData, updated_at: new Date() });
 
             // 4. Determine clean user profile values (strictly for this account)
+            const meta = activeSession?.user?.user_metadata || {};
+            const googleName = meta.full_name || meta.name || meta.display_name;
+            const defaultName = googleName || activeSession?.user?.email?.split('@')[0] || "Player";
+            const googlePhoto = meta.avatar_url || meta.picture || null;
+
             const storedLocalName = localStorage.getItem('bibleQuiz_userName');
-            const defaultName = activeSession?.user?.user_metadata?.display_name || activeSession?.user?.email?.split('@')[0] || "Player";
             const userLives = cloud.lives !== undefined ? cloud.lives : MAX_LIVES;
             const userRestoreTime = cloud.nextRestoreTime || null;
             const userHints = cloud.hints !== undefined ? cloud.hints : 5;
             const userProfileName = (cloud.userName && cloud.userName !== "Guest") 
                 ? cloud.userName 
                 : (storedLocalName && storedLocalName !== "Guest" ? storedLocalName : defaultName);
-            const userPhoto = cloud.userPhoto || localStorage.getItem('bibleQuiz_userPhoto') || null;
+            const userPhoto = cloud.userPhoto || googlePhoto || localStorage.getItem('bibleQuiz_userPhoto') || null;
             const userProgress = cloud.progress || {};
             const userInfinite = (cloud.infiniteLivesUntil && parseInt(cloud.infiniteLivesUntil, 10) > Date.now()) ? parseInt(cloud.infiniteLivesUntil, 10) : null;
 
