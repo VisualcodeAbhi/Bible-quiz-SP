@@ -62,15 +62,15 @@ function AppContent() {
                 setCheckingSession(false);
             });
 
-            const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-                if (session && location.pathname === '/auth') {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+                if (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION')) {
                     navigate('/', { replace: true });
                 }
             });
 
             return () => subscription.unsubscribe();
         });
-    }, []);
+    }, [navigate]);
 
     // Control Banner visibility based on active page (hide on /auth)
     useEffect(() => {
@@ -86,31 +86,61 @@ function AppContent() {
         if (!Capacitor.isNativePlatform()) return;
         CapacitorApp.addListener('appUrlOpen', async (data) => {
             if (!data.url) return;
-            // Catch biblequiz://auth or oauth callbacks
-            if (data.url.includes('biblequiz://')) {
-                if (data.url.includes('#access_token=') || data.url.includes('?access_token=')) {
-                    const separator = data.url.includes('#') ? '#' : '?';
-                    const params = new URLSearchParams(data.url.split(separator)[1]);
-                    const accessToken = params.get('access_token');
-                    const refreshToken = params.get('refresh_token');
-                    if (accessToken && refreshToken) {
-                        const { supabase } = await import('./lib/supabaseClient');
-                        await supabase.auth.setSession({
-                            access_token: accessToken,
-                            refresh_token: refreshToken
-                        });
-                        navigate('/', { replace: true });
-                        return;
+            const urlString = data.url;
+
+            // Catch any biblequiz:// scheme redirects
+            if (urlString.includes('biblequiz://')) {
+                const { supabase } = await import('./lib/supabaseClient');
+
+                // 1. Check for PKCE Code parameter (e.g. ?code=... or &code=...)
+                if (urlString.includes('code=')) {
+                    try {
+                        const urlObj = new URL(urlString.replace('biblequiz://', 'https://dummy.app/'));
+                        const code = urlObj.searchParams.get('code');
+                        if (code) {
+                            const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+                            if (exchangeData?.session) {
+                                navigate('/', { replace: true });
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        console.error("PKCE Code exchange error", e);
                     }
                 }
 
-                // If user is already authenticated after Google redirect, go straight to Home
-                const { supabase } = await import('./lib/supabaseClient');
+                // 2. Check for Implicit Tokens in Hash (e.g. #access_token=...&refresh_token=...)
+                if (urlString.includes('access_token=')) {
+                    try {
+                        const separator = urlString.includes('#') ? '#' : '?';
+                        const params = new URLSearchParams(urlString.split(separator)[1]);
+                        const accessToken = params.get('access_token');
+                        const refreshToken = params.get('refresh_token');
+                        if (accessToken && refreshToken) {
+                            await supabase.auth.setSession({
+                                access_token: accessToken,
+                                refresh_token: refreshToken
+                            });
+                            navigate('/', { replace: true });
+                            return;
+                        }
+                    } catch (e) {
+                        console.error("Token set session error", e);
+                    }
+                }
+
+                // 3. Fallback: Check if session is already established or navigate Home
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session) {
                     navigate('/', { replace: true });
                 } else {
-                    navigate('/auth', { replace: true });
+                    // Small delay to allow async auth state to settle before navigating Home
+                    setTimeout(async () => {
+                        const { data: { session: retrySession } } = await supabase.auth.getSession();
+                        if (retrySession) {
+                            navigate('/', { replace: true });
+                        }
+                    }, 500);
                 }
             }
         });
