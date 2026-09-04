@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
-
+import { Capacitor } from '@capacitor/core';
+import { App as CapacitorApp } from '@capacitor/app';
 
 const Auth = () => {
     const navigate = useNavigate();
@@ -17,9 +18,6 @@ const Auth = () => {
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
 
-
-
-
     // Auto-redirect to Home if user is already logged in or logs in via Google OAuth
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -33,11 +31,29 @@ const Auth = () => {
                 setIsUpdatePassword(true);
                 setIsForgotPassword(false);
                 setIsLogin(false);
-            } else if (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED')) {
+            } else if (session && !isUpdatePassword) {
                 navigate('/', { replace: true });
             }
         });
-        return () => subscription.unsubscribe();
+
+        let appStateListener;
+        if (Capacitor.isNativePlatform()) {
+            CapacitorApp.addListener('appStateChange', async (state) => {
+                if (state.isActive) {
+                    const { data: { session: resumedSession } } = await supabase.auth.getSession();
+                    if (resumedSession && !isUpdatePassword) {
+                        navigate('/', { replace: true });
+                    }
+                }
+            }).then(handle => {
+                appStateListener = handle;
+            });
+        }
+
+        return () => {
+            subscription.unsubscribe();
+            if (appStateListener) appStateListener.remove();
+        };
     }, [navigate, isUpdatePassword]);
 
 

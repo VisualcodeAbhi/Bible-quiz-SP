@@ -436,7 +436,7 @@ const Home = () => {
 
             <div className="container" style={{ animation: 'fadeIn 1s ease-in', paddingTop: '100px' /* Push content down due to header */ }}>
                 <img src="/images/Logo1.png" alt="Telugu Bible Quiz Logo" className="logo" />
-                <h1>Bible Quiz</h1>
+                <h1>Telugu<br/>Bible Quiz</h1>
                 <div className="btn-group">
                     <button className="action-btn" onClick={() => navigate('/ot')}>
                         <span className="btn-main-text">పాత నిబంధన</span>

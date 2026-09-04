@@ -4,8 +4,10 @@ import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import Loader from './components/Loader';
 import ScreenRestriction from './components/ScreenRestriction';
+import UpdateModal from './components/UpdateModal';
 import { ntFiles } from './ntFiles';
 import { AdMobService } from './services/admob';
+import { checkForAppUpdate } from './services/appUpdateService';
 
 // Lazy load pages
 const Home = lazy(() => import('./pages/Home'));
@@ -21,9 +23,74 @@ function AppContent() {
     const navigate = useNavigate();
     const location = useLocation();
     const [checkingSession, setCheckingSession] = React.useState(true);
+    const [updateData, setUpdateData] = React.useState(null);
 
-    // Initial Session Check & AdMob Init
+    // Deep link processor helper
+    const processAuthUrl = async (url) => {
+        if (!url) return;
+        try {
+            const { supabase } = await import('./lib/supabaseClient');
+
+            // Check for Access Token / Refresh Token (Implicit Flow)
+            if (url.includes('access_token=') || url.includes('refresh_token=')) {
+                const hashIndex = url.indexOf('#');
+                const queryIndex = url.indexOf('?');
+                let paramsString = '';
+                if (hashIndex !== -1) {
+                    paramsString = url.substring(hashIndex + 1);
+                } else if (queryIndex !== -1) {
+                    paramsString = url.substring(queryIndex + 1);
+                }
+
+                const params = new URLSearchParams(paramsString);
+                const accessToken = params.get('access_token');
+                const refreshToken = params.get('refresh_token');
+
+                if (accessToken && refreshToken) {
+                    const { data, error } = await supabase.auth.setSession({
+                        access_token: accessToken,
+                        refresh_token: refreshToken
+                    });
+                    if (!error && data?.session) {
+                        navigate('/', { replace: true });
+                        return;
+                    }
+                }
+            }
+
+            // Check for PKCE Code
+            if (url.includes('code=')) {
+                const queryStr = url.split('?')[1] || url.split('#')[1] || '';
+                const params = new URLSearchParams(queryStr);
+                const code = params.get('code');
+                if (code) {
+                    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+                    if (!error && data?.session) {
+                        navigate('/', { replace: true });
+                        return;
+                    }
+                }
+            }
+
+            // General session check fallback after redirect
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                navigate('/', { replace: true });
+            }
+        } catch (e) {
+            console.error("Auth URL processing error:", e);
+        }
+    };
+
+    // 1. Initial Session Check, App Update Check & AdMob Init
     useEffect(() => {
+        // Check for Google Play Store updates
+        checkForAppUpdate().then((info) => {
+            if (info && info.updateAvailable) {
+                setUpdateData(info);
+            }
+        });
+
         // Initialize AdMob
         const initAdMob = async () => {
             await AdMobService.initialize();
@@ -31,39 +98,28 @@ function AppContent() {
         };
         initAdMob();
 
-        // Dynamically manage Banner ad visibility based on route
-        if (location.pathname === '/auth') {
-            AdMobService.hideBanner();
-        } else {
-            AdMobService.showBanner();
-        }
-
+        // Check active session on startup
         import('./lib/supabaseClient').then(({ supabase }) => {
-            const minDelay = new Promise(resolve => setTimeout(resolve, 1000));
+            const minDelay = new Promise(resolve => setTimeout(resolve, 800));
             const sessionCheck = supabase.auth.getSession();
 
-            // Timeout to prevent infinite loading
             const timeoutPromise = new Promise((resolve) => {
-                setTimeout(() => resolve('timeout'), 5000);
+                setTimeout(() => resolve('timeout'), 4000);
             });
 
             Promise.race([
                 Promise.all([sessionCheck, minDelay]),
                 timeoutPromise
-            ]).then((result) => {
-                if (result === 'timeout') {
-                    import('@capacitor/toast').then(({ Toast }) => {
-                        Toast.show({
-                            text: 'Process taking too long. Check internet connection.',
-                            duration: 'long'
-                        });
-                    });
-                }
+            ]).then(([res]) => {
                 setCheckingSession(false);
+                if (res?.data?.session && location.pathname === '/auth') {
+                    navigate('/', { replace: true });
+                }
             });
 
+            // Global Auth State Change Listener
             const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-                if (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION')) {
+                if (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION' || window.location.pathname === '/auth')) {
                     navigate('/', { replace: true });
                 }
             });
@@ -72,7 +128,7 @@ function AppContent() {
         });
     }, [navigate]);
 
-    // Control Banner visibility based on active page (hide on /auth)
+    // 2. Control Banner visibility based on active page (hide on /auth)
     useEffect(() => {
         if (location.pathname === '/auth') {
             AdMobService.hideBanner();
@@ -81,83 +137,101 @@ function AppContent() {
         }
     }, [location.pathname]);
 
-    // Deep Link Handler for Google OAuth & App Links
+    // 3. Deep Link & App State Resume Handlers (Native Google OAuth)
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return;
-        CapacitorApp.addListener('appUrlOpen', async (data) => {
-            if (!data.url) return;
-            const urlString = data.url;
 
-            // Catch any biblequiz:// scheme redirects
-            if (urlString.includes('biblequiz://')) {
-                const { supabase } = await import('./lib/supabaseClient');
+        let urlOpenListener;
+        let appStateListener;
 
-                // 1. Check for PKCE Code parameter (e.g. ?code=... or &code=...)
-                if (urlString.includes('code=')) {
-                    try {
-                        const urlObj = new URL(urlString.replace('biblequiz://', 'https://dummy.app/'));
-                        const code = urlObj.searchParams.get('code');
-                        if (code) {
-                            const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-                            if (exchangeData?.session) {
+        const registerNativeListeners = async () => {
+            // A. Deep Link Listener
+            urlOpenListener = await CapacitorApp.addListener('appUrlOpen', async (data) => {
+                if (!data?.url) return;
+                const urlString = data.url;
+
+                if (urlString.includes('biblequiz://') || urlString.includes('com.telugubiblequiz.app://')) {
+                    const { supabase } = await import('./lib/supabaseClient');
+
+                    if (urlString.includes('code=')) {
+                        try {
+                            const urlObj = new URL(urlString.replace('biblequiz://', 'https://dummy.app/').replace('com.telugubiblequiz.app://', 'https://dummy.app/'));
+                            const code = urlObj.searchParams.get('code');
+                            if (code) {
+                                const { data: exchangeData } = await supabase.auth.exchangeCodeForSession(code);
+                                if (exchangeData?.session) {
+                                    navigate('/', { replace: true });
+                                    return;
+                                }
+                            }
+                        } catch (e) {
+                            console.error("PKCE Code exchange error", e);
+                        }
+                    }
+
+                    if (urlString.includes('access_token=')) {
+                        try {
+                            const separator = urlString.includes('#') ? '#' : '?';
+                            const params = new URLSearchParams(urlString.split(separator)[1]);
+                            const accessToken = params.get('access_token');
+                            const refreshToken = params.get('refresh_token');
+                            if (accessToken && refreshToken) {
+                                await supabase.auth.setSession({
+                                    access_token: accessToken,
+                                    refresh_token: refreshToken
+                                });
                                 navigate('/', { replace: true });
                                 return;
                             }
+                        } catch (e) {
+                            console.error("Token set session error", e);
                         }
-                    } catch (e) {
-                        console.error("PKCE Code exchange error", e);
+                    }
+
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session) {
+                        navigate('/', { replace: true });
                     }
                 }
+            });
 
-                // 2. Check for Implicit Tokens in Hash (e.g. #access_token=...&refresh_token=...)
-                if (urlString.includes('access_token=')) {
-                    try {
-                        const separator = urlString.includes('#') ? '#' : '?';
-                        const params = new URLSearchParams(urlString.split(separator)[1]);
-                        const accessToken = params.get('access_token');
-                        const refreshToken = params.get('refresh_token');
-                        if (accessToken && refreshToken) {
-                            await supabase.auth.setSession({
-                                access_token: accessToken,
-                                refresh_token: refreshToken
-                            });
-                            navigate('/', { replace: true });
-                            return;
-                        }
-                    } catch (e) {
-                        console.error("Token set session error", e);
+            // B. App Resume Listener (when returning from Chrome)
+            appStateListener = await CapacitorApp.addListener('appStateChange', async (state) => {
+                if (state.isActive) {
+                    const { supabase } = await import('./lib/supabaseClient');
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session && (location.pathname === '/auth' || window.location.pathname === '/auth')) {
+                        navigate('/', { replace: true });
                     }
                 }
+            });
+        };
 
-                // 3. Fallback: Check if session is already established or navigate Home
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) {
-                    navigate('/', { replace: true });
-                } else {
-                    // Small delay to allow async auth state to settle before navigating Home
-                    setTimeout(async () => {
-                        const { data: { session: retrySession } } = await supabase.auth.getSession();
-                        if (retrySession) {
-                            navigate('/', { replace: true });
-                        }
-                    }, 500);
-                }
-            }
-        });
-    }, [navigate]);
+        registerNativeListeners();
 
-    // Unified Back Button Handler
+        return () => {
+            if (urlOpenListener) urlOpenListener.remove();
+            if (appStateListener) appStateListener.remove();
+        };
+    }, [navigate, location.pathname]);
+
+        registerNativeListeners();
+
+        return () => {
+            if (urlOpenListener) urlOpenListener.remove();
+            if (appStateListener) appStateListener.remove();
+        };
+    }, [navigate, location.pathname]);
+
+    // 4. Unified Back Button Handler
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return;
         let lastBackPress = 0;
+        let backListener;
 
-        const setupListener = async () => {
-            // Remove any existing listeners first to be safe (though this runs only once ideally)
-            await CapacitorApp.removeAllListeners();
-
-            await CapacitorApp.addListener('backButton', async ({ canGoBack }) => {
+        const setupBackListener = async () => {
+            backListener = await CapacitorApp.addListener('backButton', async () => {
                 if (location.pathname === "/") {
-                    // Double Tap to Exit Logic
                     const now = Date.now();
                     if (now - lastBackPress < 2000) {
                         CapacitorApp.exitApp();
@@ -171,13 +245,9 @@ function AppContent() {
                         });
                     }
                 } else if (location.pathname === "/auth") {
-                    // From Auth, probably exit app if they can't go back? 
-                    // Or navigate Home? But Home checks auth.
-                    // Let's allow Double Back on Auth too or just Exit.
-                    // Standard: Exit.
+                    // Exit from auth screen if no active session
                     CapacitorApp.exitApp();
                 } else if (location.pathname.startsWith('/levels/')) {
-                    // Custom navigation for Levels -> Book selection
                     if (location.state && location.state.from === 'list') {
                         navigate(-1);
                     } else {
@@ -189,17 +259,17 @@ function AppContent() {
                         } else navigate(-1);
                     }
                 } else {
-                    // Default: Go Back
                     navigate(-1);
                 }
             });
         };
-        setupListener();
+
+        setupBackListener();
 
         return () => {
-            CapacitorApp.removeAllListeners();
+            if (backListener) backListener.remove();
         };
-    }, [navigate, location]);
+    }, [navigate, location.pathname, location.state]);
 
     if (checkingSession) return <Loader />;
 

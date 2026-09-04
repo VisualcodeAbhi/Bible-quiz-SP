@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { bookNameMap } from '../bookNames';
 
 const Statistics = () => {
     const navigate = useNavigate();
@@ -25,15 +26,14 @@ const Statistics = () => {
             <div className="container" style={{ height: 'auto', minHeight: '100vh' }}>
                 <header>
                     <div className="menu-icon" onClick={() => navigate('/')}>&#8592;</div>
-                    <h1>Statistics</h1>
+                    <h1>గణాంకాలు (Statistics)</h1>
                 </header>
 
                 <div style={{ padding: '0 20px', marginBottom: '20px', textAlign: 'center' }}>
                     <p style={{ fontFamily: 'Roboto', fontSize: '16px', margin: 0, lineHeight: '1.6', marginBottom: '10px' }}>
-                        "Come to me, all you who are weary and burdened, and I will give you rest."
+                        "ప్రయాసపడి భారము మోసికొనుచున్న సమస్త జనులారా, నా యొద్దకు రండి; నేను మీకు విశ్రాంతి కలుగజేతును."
                     </p>
-                    <p style={{ marginTop: '5px', fontWeight: 'bold' }}>- Matthew 11:28</p>
-
+                    <p style={{ marginTop: '5px', fontWeight: 'bold', color: '#ffc107' }}>- మత్తయి 11:28</p>
                 </div>
 
                 <div className="stats-card" style={{
@@ -44,17 +44,18 @@ const Statistics = () => {
                     marginBottom: '20px',
                     textAlign: 'center'
                 }}>
-                    <h2>Total Levels Completed</h2>
+                    <h2>పూర్తయిన మొత్తం లెవల్స్</h2>
                     <div style={{ fontSize: '48px', fontWeight: 'bold', color: '#ffc107' }}>{totalLevelsCompleted}</div>
                 </div>
 
                 <div className="stats-list" style={{ width: '90%' }}>
-                    <h3>Book Progress</h3>
+                    <h3>గ్రంథాల ప్రగతి (Book Progress)</h3>
                     {Object.keys(stats).length === 0 ? (
-                        <p>No progress yet. Start a quiz!</p>
+                        <p style={{ color: '#cbd5e1' }}>ఇంకా ఎటువంటి ప్రగతి లేదు. క్విజ్ ప్రారంభించండి!</p>
                     ) : (
                         Object.keys(stats).map(book => {
                             const completed = Object.values(stats[book]).filter(l => l.completed).length;
+                            const teluguBookName = bookNameMap[book] || book;
                             return (
                                 <div key={book} style={{
                                     display: 'flex',
@@ -62,8 +63,8 @@ const Statistics = () => {
                                     padding: '10px',
                                     borderBottom: '1px solid rgba(255,255,255,0.1)'
                                 }}>
-                                    <span>{book}</span>
-                                    <span style={{ color: '#f2f2f2ff' }}>{completed} Levels</span>
+                                    <span style={{ fontWeight: '500' }}>{teluguBookName}</span>
+                                    <span style={{ color: '#ffc107' }}>{completed} లెవల్స్ పూర్తయ్యాయి</span>
                                 </div>
                             );
                         })
@@ -71,12 +72,12 @@ const Statistics = () => {
                 </div>
 
                 <button className="action-btn" onClick={() => {
-                    if (confirm("Are you sure you want to reset all progress?")) {
+                    if (confirm("మీరు నిజంగా మీ మొత్తం ప్రగతిని రీసెట్ చేయాలనుకుంటున్నారా?")) {
                         localStorage.removeItem('bibleQuizProgress');
                         setStats({});
                     }
                 }} style={{ marginTop: '40px', background: '#F44336', color: 'white' }}>
-                    <span className="btn-main-text" style={{ fontSize: '18px' }}>Reset Progress</span>
+                    <span className="btn-main-text" style={{ fontSize: '18px' }}>ప్రగతిని రీసెట్ చేయండి</span>
                 </button>
             </div>
         </div>
