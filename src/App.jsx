@@ -119,7 +119,7 @@ function AppContent() {
 
             // Global Auth State Change Listener
             const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-                if (session && (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION' || window.location.pathname === '/auth')) {
+                if (session && (window.location.pathname === '/auth' || location.pathname === '/auth')) {
                     navigate('/', { replace: true });
                 }
             });
@@ -160,7 +160,9 @@ function AppContent() {
                             if (code) {
                                 const { data: exchangeData } = await supabase.auth.exchangeCodeForSession(code);
                                 if (exchangeData?.session) {
-                                    navigate('/', { replace: true });
+                                    if (window.location.pathname === '/auth' || location.pathname === '/auth') {
+                                        navigate('/', { replace: true });
+                                    }
                                     return;
                                 }
                             }
@@ -180,7 +182,9 @@ function AppContent() {
                                     access_token: accessToken,
                                     refresh_token: refreshToken
                                 });
-                                navigate('/', { replace: true });
+                                if (window.location.pathname === '/auth' || location.pathname === '/auth') {
+                                    navigate('/', { replace: true });
+                                }
                                 return;
                             }
                         } catch (e) {
@@ -189,7 +193,7 @@ function AppContent() {
                     }
 
                     const { data: { session } } = await supabase.auth.getSession();
-                    if (session) {
+                    if (session && (window.location.pathname === '/auth' || location.pathname === '/auth')) {
                         navigate('/', { replace: true });
                     }
                 }

@@ -117,9 +117,9 @@ export const GameProvider = ({ children }) => {
                     filter: `id=eq.${session.user.id}`
                 },
                 (payload) => {
-                    const newGameData = payload.new.game_data;
+                    const newGameData = payload.new?.game_data;
                     const localToken = localStorage.getItem('bibleQuiz_sessionToken');
-                    if (newGameData && newGameData.active_session_token && newGameData.active_session_token !== localToken) {
+                    if (newGameData && newGameData.active_session_token && localToken && newGameData.active_session_token !== localToken) {
                         // Immediately wipe local data and notify user
                         clearAllLocalStateAndStorage();
                         setShowLogoutModal(true);
@@ -131,7 +131,7 @@ export const GameProvider = ({ children }) => {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [session]);
+    }, [session?.user?.id]);
 
     // --- Helper: State Sync strictly from Cloud Profile ---
     const syncFullState = async (userId, currentAuthSession = null) => {
@@ -148,7 +148,7 @@ export const GameProvider = ({ children }) => {
                 .from('profiles')
                 .select('game_data')
                 .eq('id', userId)
-                .single();
+                .maybeSingle();
 
             let cloud = data?.game_data || {};
 
