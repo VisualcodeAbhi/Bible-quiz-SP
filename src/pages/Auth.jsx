@@ -526,20 +526,22 @@ const styles = {
         background: 'transparent',
         position: 'relative',
         overflow: 'hidden',
-        padding: '20px'
+        padding: '12px 10px',
+        width: '100%'
     },
     // bgCircle removed
     card: {
-        background: 'rgba(0, 0, 0, 0.5)',
-        backdropFilter: 'blur(10px)',
-        padding: '2rem',
-        borderRadius: '20px',
+        background: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(12px)',
+        padding: '2rem 1.5rem',
+        borderRadius: '24px',
         boxShadow: '0 10px 40px rgba(0,0,0,0.5)',
-        width: '100%',
-        maxWidth: '400px',
+        width: '95%',
+        maxWidth: '480px',
         zIndex: 1,
         transition: 'height 0.3s ease',
-        border: '1px solid rgba(255, 255, 255, 0.1)'
+        border: '1px solid rgba(255, 255, 255, 0.15)',
+        margin: '0 auto'
     },
     title: {
         color: 'white',
