@@ -102,7 +102,8 @@ export const GameProvider = ({ children }) => {
         return () => subscription.unsubscribe();
     }, []);
 
-    // --- Realtime Session Check (Single Device Enforcement) ---
+    // --- Realtime Session Check (Single Device Enforcement) - Commented out for now ---
+    /*
     useEffect(() => {
         if (!session?.user?.id) return;
 
@@ -132,6 +133,7 @@ export const GameProvider = ({ children }) => {
             supabase.removeChannel(channel);
         };
     }, [session?.user?.id]);
+    */
 
     // --- Helper: State Sync strictly from Cloud Profile ---
     const syncFullState = async (userId, currentAuthSession = null) => {
@@ -484,6 +486,7 @@ export const GameProvider = ({ children }) => {
     return (
         <GameContext.Provider value={value}>
             {children}
+            {/* Session Expired Modal - Commented out for now
             <ConfirmModal
                 isOpen={showLogoutModal}
                 title="Session Expired"
@@ -493,6 +496,7 @@ export const GameProvider = ({ children }) => {
                 showCancel={false}
                 isDanger={true}
             />
+            */}
         </GameContext.Provider>
     );
 };
