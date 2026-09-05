@@ -104,6 +104,9 @@ header h1 {
     justify-content: center;
     align-items: center;
     width: 100%;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .action-btn:active {
@@ -141,6 +144,10 @@ header h1 {
     font-size: 24px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     transition: background 0.3s ease;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    cursor: pointer;
 }
 
 .box:hover {
@@ -154,6 +161,9 @@ header h1 {
     cursor: pointer;
     color: white;
     justify-self: start;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
     /* Align to left of its grid cell */
 }
 
@@ -193,6 +203,9 @@ header {
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .level-btn:active {
@@ -294,6 +307,9 @@ header {
     background: linear-gradient(90deg, #d4b483 0%, #b08d55 100%);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .option-btn:hover {

@@ -182,7 +182,8 @@ const Home = () => {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'flex-start', // Align top items
-                zIndex: 10
+                zIndex: 10,
+                pointerEvents: 'none'
             }}>
                 {/* Profile Circle (Click to edit PHOTO) */}
                 <div onClick={openPhotoEdit} style={{
@@ -197,7 +198,8 @@ const Home = () => {
                     overflow: 'hidden',
                     border: '2px solid white',
                     boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    pointerEvents: 'auto'
                 }}>
                     {userPhoto ? (
                         <img src={userPhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -219,13 +221,14 @@ const Home = () => {
                     fontWeight: 'bold',
                     border: '2px solid #00bcd4',
                     boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                    cursor: nameLocked ? 'default' : 'pointer'
+                    cursor: nameLocked ? 'default' : 'pointer',
+                    pointerEvents: nameLocked ? 'none' : 'auto'
                 }}>
                     {userName}
                 </div>
 
                 {/* Lives & Timer */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '0' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '0', pointerEvents: 'auto' }}>
                     {/* Lives Container */}
                     <div style={{
                         background: 'rgba(255, 255, 255, 0.3)',
@@ -275,7 +278,8 @@ const Home = () => {
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
-                        border: '1px solid rgba(255,255,255,0.4)'
+                        border: '1px solid rgba(255,255,255,0.4)',
+                        pointerEvents: 'auto'
                     }}>
                         <span style={{ fontSize: '20px' }}>🛒</span>
                     </div>
