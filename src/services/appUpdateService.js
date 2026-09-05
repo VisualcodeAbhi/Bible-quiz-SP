@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabaseClient';
 
-export const CURRENT_VERSION_CODE = 1;
-export const CURRENT_VERSION_NAME = "1.0.0";
+export const CURRENT_VERSION_CODE = 4;
+export const CURRENT_VERSION_NAME = "1.0.3";
 export const PLAY_STORE_PACKAGE = "com.telugubiblequiz.app";
 export const PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${PLAY_STORE_PACKAGE}`;
 export const PLAY_STORE_MARKET_URI = `market://details?id=${PLAY_STORE_PACKAGE}`;

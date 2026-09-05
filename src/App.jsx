@@ -215,14 +215,6 @@ function AppContent() {
         };
     }, [navigate, location.pathname]);
 
-        registerNativeListeners();
-
-        return () => {
-            if (urlOpenListener) urlOpenListener.remove();
-            if (appStateListener) appStateListener.remove();
-        };
-    }, [navigate, location.pathname]);
-
     // 4. Unified Back Button Handler
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return;
