@@ -1,10 +1,13 @@
 import React, { Suspense, lazy, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import Loader from './components/Loader';
 import ScreenRestriction from './components/ScreenRestriction';
 import UpdateModal from './components/UpdateModal';
+import SplashAnimation from './components/SplashAnimation';
+import StarryBackground from './components/StarryBackground';
+import GameProvider, { useGame } from './context/GameContext';
 import { ntFiles } from './ntFiles';
 import { AdMobService } from './services/admob';
 import { checkForAppUpdate } from './services/appUpdateService';
@@ -19,9 +22,18 @@ const Statistics = lazy(() => import('./pages/Statistics'));
 const Store = lazy(() => import('./pages/Store'));
 const Auth = lazy(() => import('./pages/Auth'));
 
+// Protected Route Guard: Redirects to /auth if user is not logged in
+function ProtectedRoute({ children, session }) {
+    if (!session) {
+        return <Navigate to="/auth" replace />;
+    }
+    return children;
+}
+
 function AppContent() {
     const navigate = useNavigate();
     const location = useLocation();
+    const { session } = useGame();
     const [checkingSession, setCheckingSession] = React.useState(true);
     const [updateData, setUpdateData] = React.useState(null);
 
@@ -73,8 +85,8 @@ function AppContent() {
             }
 
             // General session check fallback after redirect
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
+            const { data: { session: activeSession } } = await supabase.auth.getSession();
+            if (activeSession) {
                 navigate('/', { replace: true });
             }
         } catch (e) {
@@ -112,15 +124,26 @@ function AppContent() {
                 timeoutPromise
             ]).then(([res]) => {
                 setCheckingSession(false);
-                if (res?.data?.session && location.pathname === '/auth') {
+                const activeSession = res?.data?.session;
+                if (!activeSession) {
+                    if (location.pathname !== '/auth') {
+                        navigate('/auth', { replace: true });
+                    }
+                } else if (location.pathname === '/auth') {
                     navigate('/', { replace: true });
                 }
             });
 
             // Global Auth State Change Listener
-            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-                if (session && (window.location.pathname === '/auth' || location.pathname === '/auth')) {
-                    navigate('/', { replace: true });
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+                if (newSession) {
+                    if (window.location.pathname === '/auth' || location.pathname === '/auth') {
+                        navigate('/', { replace: true });
+                    }
+                } else if (event === 'SIGNED_OUT') {
+                    if (window.location.pathname !== '/auth' && location.pathname !== '/auth') {
+                        navigate('/auth', { replace: true });
+                    }
                 }
             });
 
@@ -192,8 +215,8 @@ function AppContent() {
                         }
                     }
 
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (session && (window.location.pathname === '/auth' || location.pathname === '/auth')) {
+                    const { data: { session: activeSession } } = await supabase.auth.getSession();
+                    if (activeSession && (window.location.pathname === '/auth' || location.pathname === '/auth')) {
                         navigate('/', { replace: true });
                     }
                 }
@@ -203,8 +226,8 @@ function AppContent() {
             appStateListener = await CapacitorApp.addListener('appStateChange', async (state) => {
                 if (state.isActive) {
                     const { supabase } = await import('./lib/supabaseClient');
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (session && (location.pathname === '/auth' || window.location.pathname === '/auth')) {
+                    const { data: { session: activeSession } } = await supabase.auth.getSession();
+                    if (activeSession && (location.pathname === '/auth' || window.location.pathname === '/auth')) {
                         navigate('/', { replace: true });
                     }
                 }
@@ -271,39 +294,28 @@ function AppContent() {
 
     return (
         <div className="app-container">
+            {updateData && <UpdateModal updateData={updateData} onClose={() => setUpdateData(null)} />}
             <Suspense fallback={<Loader />}>
                 <Routes>
                     <Route path="/auth" element={<Auth />} />
-                    <Route path="/" element={<Home />} />
-                    <Route path="/ot" element={<OldTestament />} />
-                    <Route path="/nt" element={<NewTestament />} />
-                    <Route path="/levels/:book" element={<Levels />} />
-                    <Route path="/quiz/:book/:level" element={<Quiz />} />
-                    <Route path="/statistics" element={<Statistics />} />
-                    <Route path="/store" element={<Store />} />
+                    <Route path="/" element={<ProtectedRoute session={session}><Home /></ProtectedRoute>} />
+                    <Route path="/ot" element={<ProtectedRoute session={session}><OldTestament /></ProtectedRoute>} />
+                    <Route path="/nt" element={<ProtectedRoute session={session}><NewTestament /></ProtectedRoute>} />
+                    <Route path="/levels/:book" element={<ProtectedRoute session={session}><Levels /></ProtectedRoute>} />
+                    <Route path="/quiz/:book/:level" element={<ProtectedRoute session={session}><Quiz /></ProtectedRoute>} />
+                    <Route path="/statistics" element={<ProtectedRoute session={session}><Statistics /></ProtectedRoute>} />
+                    <Route path="/store" element={<ProtectedRoute session={session}><Store /></ProtectedRoute>} />
+                    <Route path="*" element={<Navigate to={session ? "/" : "/auth"} replace />} />
                 </Routes>
             </Suspense>
         </div>
     );
 }
 
-import GameProvider from './context/GameContext';
-
-// ... (existing imports)
-
-import SplashAnimation from './components/SplashAnimation';
-
-import StarryBackground from './components/StarryBackground';
-
 function App() {
     const [isLoading, setIsLoading] = React.useState(true);
 
-    // We can remove the window.load listener because SplashAnimation handles the delay/transition
-    // But if you want to ensure assets are loaded, we can keep a check, 
-    // but usually Lottie is the "Loading" phase.
-
     if (isLoading) {
-        // Pass onComplete to hide splash
         return <SplashAnimation onComplete={() => setIsLoading(false)} />;
     }
 
@@ -320,5 +332,3 @@ function App() {
 }
 
 export default App;
-
-
