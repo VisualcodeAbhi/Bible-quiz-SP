@@ -206,46 +206,27 @@ const Home = () => {
                 zIndex: 10,
                 pointerEvents: 'none'
             }}>
-                {/* Left Side: Profile Circle & Statistics Button */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0 20px', pointerEvents: 'auto' }}>
-                    {/* Profile Circle (Click to edit PHOTO) */}
-                    <div onClick={openPhotoEdit} style={{
-                        width: '60px',
-                        height: '60px',
-                        borderRadius: '50%',
-                        background: '#999',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        overflow: 'hidden',
-                        border: '2px solid white',
-                        boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-                        cursor: 'pointer'
-                    }}>
-                        {userPhoto ? (
-                            <img src={userPhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                            <span style={{ fontSize: '12px', color: 'white' }}>profile</span>
-                        )}
-                    </div>
-
-                    {/* Statistics Button (Styled like Store Button) */}
-                    <div onClick={() => navigate('/statistics')} style={{
-                        marginTop: '10px',
-                        cursor: 'pointer',
-                        background: 'rgba(255, 255, 255, 0.2)',
-                        backdropFilter: 'blur(5px)',
-                        borderRadius: '50%',
-                        width: '40px',
-                        height: '40px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        border: '1px solid rgba(255,255,255,0.4)',
-                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-                    }} title="Statistics">
-                        <span style={{ fontSize: '20px' }}>📊</span>
-                    </div>
+                {/* Profile Circle (Click to edit PHOTO) */}
+                <div onClick={openPhotoEdit} style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    margin: '0 20px', // Removed vertical margin to align better with expanded header
+                    background: '#999',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    overflow: 'hidden',
+                    border: '2px solid white',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                    cursor: 'pointer',
+                    pointerEvents: 'auto'
+                }}>
+                    {userPhoto ? (
+                        <img src={userPhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                        <span style={{ fontSize: '12px', color: 'white' }}>profile</span>
+                    )}
                 </div>
 
                 {/* User Name Badge (Click to edit NAME - if unlocked) */}
@@ -267,7 +248,7 @@ const Home = () => {
                     {userName}
                 </div>
 
-                {/* Right Side: Lives & Timer & Store */}
+                {/* Right Side: Lives, Timer, Store & Statistics */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '0', pointerEvents: 'auto' }}>
                     {/* Lives Container */}
                     <div style={{
@@ -324,6 +305,25 @@ const Home = () => {
                         pointerEvents: 'auto'
                     }} title="Store">
                         <span style={{ fontSize: '20px' }}>🛒</span>
+                    </div>
+
+                    {/* Statistics Icon (Below Store Button) */}
+                    <div onClick={() => navigate('/statistics')} style={{
+                        marginTop: '8px',
+                        cursor: 'pointer',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        backdropFilter: 'blur(5px)',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        border: '1px solid rgba(255,255,255,0.4)',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                        pointerEvents: 'auto'
+                    }} title="Statistics">
+                        <span style={{ fontSize: '20px' }}>📊</span>
                     </div>
                 </div>
             </div>
