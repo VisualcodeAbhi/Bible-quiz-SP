@@ -22,14 +22,6 @@ const Statistics = lazy(() => import('./pages/Statistics'));
 const Store = lazy(() => import('./pages/Store'));
 const Auth = lazy(() => import('./pages/Auth'));
 
-// Protected Route Guard: Redirects to /auth if user is not logged in
-function ProtectedRoute({ children, session }) {
-    if (!session) {
-        return <Navigate to="/auth" replace />;
-    }
-    return children;
-}
-
 function AppContent() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -264,8 +256,7 @@ function AppContent() {
                         });
                     }
                 } else if (location.pathname === "/auth") {
-                    // Exit from auth screen if no active session
-                    CapacitorApp.exitApp();
+                    navigate('/');
                 } else if (location.pathname.startsWith('/levels/')) {
                     if (location.state && location.state.from === 'list') {
                         navigate(-1);
@@ -298,14 +289,13 @@ function AppContent() {
             <Suspense fallback={<Loader />}>
                 <Routes>
                     <Route path="/auth" element={<Auth />} />
-                    <Route path="/" element={<ProtectedRoute session={session}><Home /></ProtectedRoute>} />
-                    <Route path="/ot" element={<ProtectedRoute session={session}><OldTestament /></ProtectedRoute>} />
-                    <Route path="/nt" element={<ProtectedRoute session={session}><NewTestament /></ProtectedRoute>} />
-                    <Route path="/levels/:book" element={<ProtectedRoute session={session}><Levels /></ProtectedRoute>} />
-                    <Route path="/quiz/:book/:level" element={<ProtectedRoute session={session}><Quiz /></ProtectedRoute>} />
-                    <Route path="/statistics" element={<ProtectedRoute session={session}><Statistics /></ProtectedRoute>} />
-                    <Route path="/store" element={<ProtectedRoute session={session}><Store /></ProtectedRoute>} />
-                    <Route path="*" element={<Navigate to={session ? "/" : "/auth"} replace />} />
+                    <Route path="/" element={<Home />} />
+                    <Route path="/ot" element={<OldTestament />} />
+                    <Route path="/nt" element={<NewTestament />} />
+                    <Route path="/levels/:book" element={<Levels />} />
+                    <Route path="/quiz/:book/:level" element={<Quiz />} />
+                    <Route path="/statistics" element={<Statistics />} />
+                    <Route path="/store" element={<Store />} />
                 </Routes>
             </Suspense>
         </div>
