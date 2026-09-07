@@ -38,7 +38,10 @@ export const AdMobService = {
         try {
             await AdMob.initialize({
                 requestTrackingAuthorization: true,
-                testingDevices: ['A0C6D8DE1F5997F81CBCA1D752A9CFAD'],
+                testingDevices: [
+                    'A0C6D8DE1F5997F81CBCA1D752A9CFAD',
+                    'DE136F7E37B8BE9B3BFED855B11962D3'
+                ],
                 initializeForTesting: USE_TEST_ADS
             });
             this.initialized = true;
