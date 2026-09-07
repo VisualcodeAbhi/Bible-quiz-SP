@@ -262,13 +262,11 @@ header {
 }
 
 .question-box {
-    background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-    padding: 20px;
-    border-radius: 50px;
-    margin-bottom: 30px;
+    background: transparent;
+    padding: 10px 15px;
+    margin-bottom: 25px;
     width: 90%;
     text-align: center;
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
     min-height: auto;
     display: flex;
     align-items: center;
@@ -277,11 +275,12 @@ header {
 
 .question-box p {
     margin: 0;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
-    color: black;
-    line-height: 1.4;
+    color: #ffffff;
+    line-height: 1.5;
     font-family: 'Mandali', sans-serif;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .options-container {
