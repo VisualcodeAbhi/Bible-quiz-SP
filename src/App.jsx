@@ -1,5 +1,5 @@
-import React, { Suspense, lazy, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { Capacitor } from '@capacitor/core';
 import { App as CapacitorApp } from '@capacitor/app';
 import Loader from './components/Loader';
@@ -28,6 +28,7 @@ function AppContent() {
     const { session } = useGame();
     const [checkingSession, setCheckingSession] = React.useState(true);
     const [updateData, setUpdateData] = React.useState(null);
+    const initialCheckDoneRef = useRef(false);
 
     // Deep link processor helper
     const processAuthUrl = async (url) => {
@@ -102,38 +103,30 @@ function AppContent() {
         };
         initAdMob();
 
-        // Check active session on startup
+        // Check active session ONCE on startup
         import('./lib/supabaseClient').then(({ supabase }) => {
-            const minDelay = new Promise(resolve => setTimeout(resolve, 800));
-            const sessionCheck = supabase.auth.getSession();
-
-            const timeoutPromise = new Promise((resolve) => {
-                setTimeout(() => resolve('timeout'), 4000);
-            });
-
-            Promise.race([
-                Promise.all([sessionCheck, minDelay]),
-                timeoutPromise
-            ]).then(([res]) => {
-                setCheckingSession(false);
-                const activeSession = res?.data?.session;
-                if (!activeSession) {
-                    if (location.pathname !== '/auth') {
+            supabase.auth.getSession().then(({ data: { session: activeSession } }) => {
+                if (!initialCheckDoneRef.current) {
+                    initialCheckDoneRef.current = true;
+                    if (!activeSession) {
                         navigate('/auth', { replace: true });
+                    } else if (window.location.pathname === '/auth') {
+                        navigate('/', { replace: true });
                     }
-                } else if (location.pathname === '/auth') {
-                    navigate('/', { replace: true });
                 }
+                setCheckingSession(false);
+            }).catch(() => {
+                setCheckingSession(false);
             });
 
             // Global Auth State Change Listener
             const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
                 if (newSession) {
-                    if (window.location.pathname === '/auth' || location.pathname === '/auth') {
+                    if (window.location.pathname === '/auth') {
                         navigate('/', { replace: true });
                     }
                 } else if (event === 'SIGNED_OUT') {
-                    if (window.location.pathname !== '/auth' && location.pathname !== '/auth') {
+                    if (window.location.pathname !== '/auth') {
                         navigate('/auth', { replace: true });
                     }
                 }
