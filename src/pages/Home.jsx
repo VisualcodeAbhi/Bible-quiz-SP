@@ -170,6 +170,21 @@ const Home = () => {
 
 
 
+    // Difficulty & Modal States
+    const [showTestamentModal, setShowTestamentModal] = React.useState(false);
+    const [showLockedModal, setShowLockedModal] = React.useState(false);
+
+    const handleLockedLevelClick = async () => {
+        try {
+            await Toast.show({
+                text: '* unlocking after completing the beginner level *',
+                duration: 'long',
+                position: 'center'
+            });
+        } catch (e) {}
+        setShowLockedModal(true);
+    };
+
     return (
         <div className="home-bg-wrapper">
             {/* Header Overlay */}
@@ -442,50 +457,193 @@ const Home = () => {
                 <img src="/images/Logo1.png" alt="Telugu Bible Quiz Logo" className="logo" />
                 <h1>Telugu<br/>Bible Quiz</h1>
                 <div className="btn-group">
-                    <button className="action-btn" onClick={() => navigate('/ot')}>
-                        <span className="btn-main-text">పాత నిబంధన</span>
-                        <span className="btn-eng-text">Old Testament</span>
+                    {/* Beginner Option (Unlocked) */}
+                    <button
+                        className="action-btn"
+                        onClick={() => setShowTestamentModal(true)}
+                        style={{
+                            background: 'linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)',
+                            border: '2px solid #38ef7d',
+                            boxShadow: '0 6px 16px rgba(56, 239, 125, 0.25)'
+                        }}
+                    >
+                        <span className="btn-main-text" style={{ color: '#11998e', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            🌱 Beginner
+                        </span>
+                        <span className="btn-sub-text" style={{ color: '#444' }}>
+                            ఆరంభ స్థాయి
+                        </span>
                     </button>
-                    <button className="action-btn" onClick={() => navigate('/nt')}>
-                        <span className="btn-main-text">కొత్త నిబంధన</span>
-                        <span className="btn-eng-text">New Testament</span>
+
+                    {/* Intermediate Option (Locked) */}
+                    <button
+                        className="action-btn"
+                        onClick={handleLockedLevelClick}
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.55)',
+                            backdropFilter: 'blur(8px)',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            opacity: 0.85
+                        }}
+                    >
+                        <span className="btn-main-text" style={{ color: '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            🔒 Intermediate
+                        </span>
+                        <span className="btn-sub-text" style={{ color: '#666' }}>
+                            మధ్యస్థ స్థాయి
+                        </span>
                     </button>
-                    <button className="action-btn" onClick={() => navigate('/statistics')}>
-                        <span className="btn-main-text">గణాంకాలు</span>
-                        <span className="btn-eng-text">Statistics</span>
+
+                    {/* Advanced Option (Locked) */}
+                    <button
+                        className="action-btn"
+                        onClick={handleLockedLevelClick}
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.55)',
+                            backdropFilter: 'blur(8px)',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            opacity: 0.85
+                        }}
+                    >
+                        <span className="btn-main-text" style={{ color: '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            🔒 Advanced
+                        </span>
+                        <span className="btn-sub-text" style={{ color: '#666' }}>
+                            ఉన్నత స్థాయి
+                        </span>
+                    </button>
+
+                    {/* Statistics Button */}
+                    <button
+                        className="action-btn"
+                        onClick={() => navigate('/statistics')}
+                        style={{ marginTop: '5px' }}
+                    >
+                        <span className="btn-main-text">📊 Statistics</span>
+                        <span className="btn-sub-text">గణాంకాలు</span>
                     </button>
                 </div>
-
-                {/* Login Prompt for Guests */}
-                {!isLoggedIn && (
-                    <button
-                        onClick={() => navigate('/auth')}
-                        style={{
-                            marginTop: '25px',
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                            border: 'none',
-                            color: 'white',
-                            padding: '15px 30px',
-                            borderRadius: '50px',
-                            fontWeight: 'bold',
-                            fontSize: '16px',
-                            boxShadow: '0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23)',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s cubic-bezier(.25,.8,.25,1)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px',
-                            animation: 'float 3s ease-in-out infinite'
-                        }}
-                        onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-                        onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-                        onTouchStart={e => e.currentTarget.style.transform = 'scale(0.95)'}
-                        onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
-                    >
-                        <span>☁️</span> To store the data login now
-                    </button>
-                )}
             </div>
+
+            {/* Testament Selection Modal for Beginner Mode */}
+            {showTestamentModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(0, 0, 0, 0.7)',
+                    backdropFilter: 'blur(8px)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 9999,
+                    animation: 'fadeIn 0.2s ease-out'
+                }}>
+                    <div style={{
+                        background: 'linear-gradient(180deg, #ffffff 0%, #f4f6fb 100%)',
+                        padding: '30px 20px',
+                        borderRadius: '24px',
+                        width: '88%',
+                        maxWidth: '360px',
+                        textAlign: 'center',
+                        boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
+                        position: 'relative',
+                        border: '1px solid rgba(255, 255, 255, 0.8)'
+                    }}>
+                        {/* Close button */}
+                        <button
+                            onClick={() => setShowTestamentModal(false)}
+                            style={{
+                                position: 'absolute',
+                                top: '15px',
+                                right: '15px',
+                                background: 'rgba(0,0,0,0.05)',
+                                border: 'none',
+                                borderRadius: '50%',
+                                width: '32px',
+                                height: '32px',
+                                fontSize: '16px',
+                                color: '#666',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            ✕
+                        </button>
+
+                        <div style={{ fontSize: '36px', marginBottom: '10px' }}>📖</div>
+                        <h2 style={{ color: '#1a237e', margin: '0 0 5px 0', fontSize: '22px', fontWeight: 'bold' }}>
+                            Select Testament
+                        </h2>
+                        <p style={{ color: '#666', margin: '0 0 25px 0', fontSize: '14px' }}>
+                            నిబంధనను ఎంచుకోండి
+                        </p>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            <button
+                                className="action-btn"
+                                onClick={() => {
+                                    setShowTestamentModal(false);
+                                    navigate('/ot');
+                                }}
+                                style={{
+                                    background: 'linear-gradient(135deg, #d4b483 0%, #b08d55 100%)',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '14px 20px',
+                                    borderRadius: '16px',
+                                    boxShadow: '0 6px 15px rgba(176, 141, 85, 0.35)'
+                                }}
+                            >
+                                <span className="btn-main-text" style={{ color: '#fff', fontSize: '20px' }}>
+                                    పాత నిబంధన
+                                </span>
+                                <span className="btn-sub-text" style={{ color: '#f0f0f0', fontSize: '13px' }}>
+                                    Old Testament (39 Books)
+                                </span>
+                            </button>
+
+                            <button
+                                className="action-btn"
+                                onClick={() => {
+                                    setShowTestamentModal(false);
+                                    navigate('/nt');
+                                }}
+                                style={{
+                                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '14px 20px',
+                                    borderRadius: '16px',
+                                    boxShadow: '0 6px 15px rgba(102, 126, 234, 0.35)'
+                                }}
+                            >
+                                <span className="btn-main-text" style={{ color: '#fff', fontSize: '20px' }}>
+                                    కొత్త నిబంధన
+                                </span>
+                                <span className="btn-sub-text" style={{ color: '#f0f0f0', fontSize: '13px' }}>
+                                    New Testament (27 Books)
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Level Locked Alert Modal */}
+            <ConfirmModal
+                isOpen={showLockedModal}
+                title="Level Locked"
+                message="* unlocking after completing the beginner level *"
+                onConfirm={() => setShowLockedModal(false)}
+                confirmText="OK"
+                showCancel={false}
+                icon="🔒"
+            />
 
             <ConfirmModal
                 isOpen={showResetModal}

@@ -484,24 +484,6 @@ const Auth = () => {
                         )}
                     </div>
                 )}
-
-                {/* GO BACK BUTTON */}
-                <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                    <button
-                        onClick={() => navigate('/')}
-                        style={{
-                            background: 'transparent',
-                            border: '1px solid rgba(255, 255, 255, 0.3)',
-                            color: 'white',
-                            padding: '8px 20px',
-                            borderRadius: '20px',
-                            cursor: 'pointer',
-                            fontSize: '14px'
-                        }}
-                    >
-                        Go Back
-                    </button>
-                </div>
             </div>
 
 

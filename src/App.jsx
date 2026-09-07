@@ -227,6 +227,13 @@ function AppContent() {
         };
     }, [navigate, location.pathname]);
 
+    // Route Protection Guard
+    useEffect(() => {
+        if (!checkingSession && !session && location.pathname !== '/auth') {
+            navigate('/auth', { replace: true });
+        }
+    }, [checkingSession, session, location.pathname, navigate]);
+
     // 4. Unified Back Button Handler
     useEffect(() => {
         if (!Capacitor.isNativePlatform()) return;
@@ -235,7 +242,7 @@ function AppContent() {
 
         const setupBackListener = async () => {
             backListener = await CapacitorApp.addListener('backButton', async () => {
-                if (location.pathname === "/") {
+                if (location.pathname === "/" || location.pathname === "/auth") {
                     const now = Date.now();
                     if (now - lastBackPress < 2000) {
                         CapacitorApp.exitApp();
@@ -248,8 +255,6 @@ function AppContent() {
                             });
                         });
                     }
-                } else if (location.pathname === "/auth") {
-                    navigate('/');
                 } else if (location.pathname.startsWith('/levels/')) {
                     if (location.state && location.state.from === 'list') {
                         navigate(-1);
