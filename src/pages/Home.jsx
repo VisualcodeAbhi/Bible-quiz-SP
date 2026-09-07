@@ -206,27 +206,46 @@ const Home = () => {
                 zIndex: 10,
                 pointerEvents: 'none'
             }}>
-                {/* Profile Circle (Click to edit PHOTO) */}
-                <div onClick={openPhotoEdit} style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    margin: '0 20px', // Removed vertical margin to align better with expanded header
-                    background: '#999',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    overflow: 'hidden',
-                    border: '2px solid white',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-                    cursor: 'pointer',
-                    pointerEvents: 'auto'
-                }}>
-                    {userPhoto ? (
-                        <img src={userPhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                        <span style={{ fontSize: '12px', color: 'white' }}>profile</span>
-                    )}
+                {/* Left Side: Profile Circle & Statistics Button */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0 20px', pointerEvents: 'auto' }}>
+                    {/* Profile Circle (Click to edit PHOTO) */}
+                    <div onClick={openPhotoEdit} style={{
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '50%',
+                        background: '#999',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        overflow: 'hidden',
+                        border: '2px solid white',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                        cursor: 'pointer'
+                    }}>
+                        {userPhoto ? (
+                            <img src={userPhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                            <span style={{ fontSize: '12px', color: 'white' }}>profile</span>
+                        )}
+                    </div>
+
+                    {/* Statistics Button (Styled like Store Button) */}
+                    <div onClick={() => navigate('/statistics')} style={{
+                        marginTop: '10px',
+                        cursor: 'pointer',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        backdropFilter: 'blur(5px)',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        border: '1px solid rgba(255,255,255,0.4)',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
+                    }} title="Statistics">
+                        <span style={{ fontSize: '20px' }}>📊</span>
+                    </div>
                 </div>
 
                 {/* User Name Badge (Click to edit NAME - if unlocked) */}
@@ -248,7 +267,7 @@ const Home = () => {
                     {userName}
                 </div>
 
-                {/* Lives & Timer */}
+                {/* Right Side: Lives & Timer & Store */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '0', pointerEvents: 'auto' }}>
                     {/* Lives Container */}
                     <div style={{
@@ -293,6 +312,7 @@ const Home = () => {
                         marginTop: '10px',
                         cursor: 'pointer',
                         background: 'rgba(255, 255, 255, 0.2)',
+                        backdropFilter: 'blur(5px)',
                         borderRadius: '50%',
                         width: '40px',
                         height: '40px',
@@ -300,8 +320,9 @@ const Home = () => {
                         justifyContent: 'center',
                         alignItems: 'center',
                         border: '1px solid rgba(255,255,255,0.4)',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
                         pointerEvents: 'auto'
-                    }}>
+                    }} title="Store">
                         <span style={{ fontSize: '20px' }}>🛒</span>
                     </div>
                 </div>
@@ -359,43 +380,64 @@ const Home = () => {
                                 background: 'none',
                                 border: 'none',
                                 fontSize: '20px',
-                                color: '#999',
                                 cursor: 'pointer',
-                                padding: '5px'
+                                color: '#666'
                             }}
                         >
                             ✕
                         </button>
 
-                        <h2 style={{ color: 'black', margin: '0 0 20px 0', fontSize: '20px', fontWeight: 'bold' }}>Edit Profile</h2>
+                        <h2 style={{ color: 'black', marginTop: 0, marginBottom: '20px' }}>Profile Photo</h2>
 
-                        <div style={{ marginBottom: '25px', display: 'flex', justifyContent: 'center' }}>
-                            <label style={{ cursor: 'pointer', position: 'relative', display: 'inline-block' }}>
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handlePhotoChange}
-                                    style={{ display: 'none' }}
-                                />
-                                <div style={{
-                                    width: '100px',
-                                    height: '100px',
-                                    borderRadius: '50%',
-                                    border: '4px solid #fff',
-                                    boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
-                                    overflow: 'hidden',
-                                    background: '#eee',
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center'
-                                }}>
-                                    {editPhoto ? (
-                                        <img src={editPhoto} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                    ) : (
-                                        <span style={{ fontSize: '30px', color: '#aaa' }}>📷</span>
-                                    )}
-                                </div>
+                        <div style={{
+                            width: '120px',
+                            height: '120px',
+                            borderRadius: '50%',
+                            background: '#f0f0f0',
+                            margin: '0 auto 20px',
+                            overflow: 'hidden',
+                            border: '3px solid #eee',
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center'
+                        }}>
+                            {editPhoto ? (
+                                <img src={editPhoto} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                <span style={{ color: '#aaa', fontSize: '30px' }}>📷</span>
+                            )}
+                        </div>
+
+                        {/* Top Actions: Choose & Logout */}
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '15px' }}>
+                            <label style={{
+                                padding: '10px 15px',
+                                background: '#2196F3',
+                                color: 'white',
+                                borderRadius: '5px',
+                                cursor: 'pointer',
+                                fontSize: '14px',
+                                fontWeight: 'bold'
+                            }}>
+                                Choose New
+                                <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
                             </label>
+
+                            <button
+                                onClick={handleLogout}
+                                style={{
+                                    padding: '10px 15px',
+                                    background: '#f44336',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '5px',
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Logout
+                            </button>
                         </div>
 
                         <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '15px' }}>
@@ -517,16 +559,6 @@ const Home = () => {
                         <span className="btn-sub-text" style={{ color: '#666' }}>
                             ఉన్నత స్థాయి
                         </span>
-                    </button>
-
-                    {/* Statistics Button */}
-                    <button
-                        className="action-btn"
-                        onClick={() => navigate('/statistics')}
-                        style={{ marginTop: '5px' }}
-                    >
-                        <span className="btn-main-text">📊 Statistics</span>
-                        <span className="btn-sub-text">గణాంకాలు</span>
                     </button>
                 </div>
             </div>

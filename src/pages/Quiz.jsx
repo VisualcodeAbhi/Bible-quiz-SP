@@ -8,6 +8,44 @@ import { AdMobService } from '../services/admob';
 import { Toast } from '@capacitor/toast';
 import ConfirmModal from '../components/ConfirmModal';
 
+// Helper function to gamble/shuffle both options and questions
+const shuffleQuestionsAndOptions = (rawQuestions) => {
+    if (!Array.isArray(rawQuestions)) return [];
+
+    // Map each question: clone options, randomize options with Fisher-Yates, and re-compute correct answer index
+    const preparedQuestions = rawQuestions.map(q => {
+        const originalOptions = Array.isArray(q.options) ? [...q.options] : [];
+        const correctIdx = typeof q.correct === 'number' && q.correct >= 0 && q.correct < originalOptions.length ? q.correct : 0;
+        const correctAnswerText = originalOptions[correctIdx];
+
+        // Fisher-Yates shuffle options array
+        const shuffledOptions = [...originalOptions];
+        for (let i = shuffledOptions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = shuffledOptions[i];
+            shuffledOptions[i] = shuffledOptions[j];
+            shuffledOptions[j] = temp;
+        }
+
+        const newCorrectIndex = shuffledOptions.indexOf(correctAnswerText);
+        return {
+            ...q,
+            options: shuffledOptions,
+            correct: newCorrectIndex !== -1 ? newCorrectIndex : 0
+        };
+    });
+
+    // Fisher-Yates shuffle the question list itself
+    for (let i = preparedQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = preparedQuestions[i];
+        preparedQuestions[i] = preparedQuestions[j];
+        preparedQuestions[j] = temp;
+    }
+
+    return preparedQuestions;
+};
+
 const Quiz = () => {
     const { book: bookFile, level } = useParams();
     const navigate = useNavigate();
@@ -66,34 +104,9 @@ const Quiz = () => {
                 const data = module.default || module;
                 setBookData(data);
 
-                const levelQuestions = data.levels[level];
+                const levelQuestions = data.levels?.[level];
                 if (levelQuestions) {
-                    // Randomize options for each question AND shuffle questions
-                    const shuffled = levelQuestions.map(q => {
-                        const originalOptions = q.options || [];
-                        const correctAnswerText = originalOptions[q.correct];
-
-                        // Fisher-Yates shuffle the options
-                        const shuffledOptions = [...originalOptions];
-                        for (let i = shuffledOptions.length - 1; i > 0; i--) {
-                            const j = Math.floor(Math.random() * (i + 1));
-                            [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
-                        }
-
-                        const newCorrectIndex = shuffledOptions.indexOf(correctAnswerText);
-                        return {
-                            ...q,
-                            options: shuffledOptions,
-                            correct: newCorrectIndex !== -1 ? newCorrectIndex : q.correct
-                        };
-                    });
-
-                    // Fisher-Yates shuffle the question list
-                    for (let i = shuffled.length - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                    }
-                    setQuestions(shuffled);
+                    setQuestions(shuffleQuestionsAndOptions(levelQuestions));
                 } else {
                     console.error("Level not found");
                 }
@@ -319,26 +332,7 @@ const Quiz = () => {
                             <button className="action-btn" onClick={() => {
                                 // Reset for Retry and reshuffle
                                 const levelQuestions = bookData?.levels?.[level] || [];
-                                const reshuffled = levelQuestions.map(q => {
-                                    const originalOptions = q.options || [];
-                                    const correctAnswerText = originalOptions[q.correct];
-                                    const shuffledOptions = [...originalOptions];
-                                    for (let i = shuffledOptions.length - 1; i > 0; i--) {
-                                        const j = Math.floor(Math.random() * (i + 1));
-                                        [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
-                                    }
-                                    const newCorrectIndex = shuffledOptions.indexOf(correctAnswerText);
-                                    return {
-                                        ...q,
-                                        options: shuffledOptions,
-                                        correct: newCorrectIndex !== -1 ? newCorrectIndex : q.correct
-                                    };
-                                });
-                                for (let i = reshuffled.length - 1; i > 0; i--) {
-                                    const j = Math.floor(Math.random() * (i + 1));
-                                    [reshuffled[i], reshuffled[j]] = [reshuffled[j], reshuffled[i]];
-                                }
-                                setQuestions(reshuffled);
+                                setQuestions(shuffleQuestionsAndOptions(levelQuestions));
                                 setQuizFinished(false);
                                 setCurrentQuestionIndex(0);
                                 setScore(0);
