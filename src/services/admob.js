@@ -125,16 +125,33 @@ export const AdMobService = {
         });
     },
     
-    async showInterstitial() {
+    async prepareInterstitial() {
         if (!Capacitor.isNativePlatform()) return;
         try {
             await AdMob.prepareInterstitial({
                 adId: INTERSTITIAL_ID,
                 isTesting: USE_TEST_ADS
             });
+        } catch(e) {
+            console.error("Prepare Interstitial Fail", e);
+        }
+    },
+    
+    async showInterstitial() {
+        if (!Capacitor.isNativePlatform()) return;
+        try {
             await AdMob.showInterstitial();
         } catch(e) {
-            console.error("Interstitial Fail", e);
+            // Fallback prepare and show if not preloaded
+            try {
+                await AdMob.prepareInterstitial({
+                    adId: INTERSTITIAL_ID,
+                    isTesting: USE_TEST_ADS
+                });
+                await AdMob.showInterstitial();
+            } catch(err) {
+                console.error("Interstitial Fail", err);
+            }
         }
     }
 };

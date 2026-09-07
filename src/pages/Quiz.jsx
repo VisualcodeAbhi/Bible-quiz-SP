@@ -40,6 +40,9 @@ const Quiz = () => {
 
     // Load Data
     useEffect(() => {
+        // Preload Interstitial Ad in background
+        AdMobService.prepareInterstitial().catch(() => {});
+
         const loadData = async () => {
             const minDelay = new Promise(resolve => setTimeout(resolve, 800));
             // Reset state
@@ -107,6 +110,7 @@ const Quiz = () => {
 
     const handleOptionClick = (index) => {
         if (selectedOption !== null) return;
+        if (timerRef.current) clearTimeout(timerRef.current);
 
         setSelectedOption(index);
         const currentQuestion = questions[currentQuestionIndex];
@@ -116,26 +120,30 @@ const Quiz = () => {
         setFeedbackType(correct ? 'correct' : 'wrong');
         setShowFeedback(true);
 
+        const newScore = correct ? score + 1 : score;
         if (correct) {
-            setScore(s => s + 1);
+            setScore(newScore);
             setShowConfetti(true);
         } else {
             deductLife();
         }
 
+        const isLastQuestion = currentQuestionIndex >= questions.length - 1;
+        const delay = isLastQuestion ? 400 : 600;
+
         setTimeout(() => {
             setShowFeedback(false);
             setShowConfetti(false);
 
-            if (currentQuestionIndex < questions.length - 1) {
+            if (!isLastQuestion) {
                 setCurrentQuestionIndex(prev => prev + 1);
                 setSelectedOption(null);
                 setIsCorrect(null);
                 setTimer(30);
             } else {
-                finishQuiz(correct ? score + 1 : score);
+                finishQuiz(newScore);
             }
-        }, 1000);
+        }, delay);
     };
 
     const [adLoadingAction, setAdLoadingAction] = useState(null); // 'skip' or 'hint' or null
@@ -217,15 +225,10 @@ const Quiz = () => {
     // ...
 
     const finishQuiz = (finalScore) => {
-        // Immediately render the results screen & save progress without blocking
+        setScore(finalScore);
         setQuizFinished(true);
         const passed = (finalScore / questions.length) >= 0.5;
         saveProgress(finalScore, passed);
-
-        // Show Interstitial Ad in background
-        AdMobService.showInterstitial().catch(e => {
-            console.error("Interstitial Ad failed:", e);
-        });
     };
 
     const saveProgress = (finalScore, passed) => {
@@ -254,7 +257,7 @@ const Quiz = () => {
 
         return (
             <div className="container">
-                {passed && <Confetti recycle={true} numberOfPieces={200} />}
+                {passed && <Confetti recycle={false} numberOfPieces={120} gravity={0.3} />}
 
                 <img src="/images/Logo1.png" alt="Quiz Logo" className="logo" style={{ width: '200px', marginBottom: '20px' }} />
 
@@ -287,6 +290,7 @@ const Quiz = () => {
                     <div className="btn-group">
                         {parseInt(level) < bookData.chapters && passed && (
                             <button className="action-btn" onClick={() => {
+                                AdMobService.showInterstitial().catch(() => {});
                                 navigate(`/quiz/${bookFile}/${parseInt(level) + 1}`, { replace: true });
                             }}>
                                 <span className="btn-main-text">Next Level</span>
@@ -308,7 +312,10 @@ const Quiz = () => {
                                 <span className="btn-main-text">Retry</span>
                             </button>
                         )}
-                        <button className="action-btn" onClick={() => navigate('/')}>
+                        <button className="action-btn" onClick={() => {
+                            AdMobService.showInterstitial().catch(() => {});
+                            navigate('/');
+                        }}>
                             <span className="btn-main-text">Home</span>
                         </button>
                     </div>
