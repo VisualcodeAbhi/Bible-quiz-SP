@@ -173,11 +173,17 @@ const Home = () => {
     // Difficulty & Modal States
     const [showTestamentModal, setShowTestamentModal] = React.useState(false);
     const [showLockedModal, setShowLockedModal] = React.useState(false);
+    const [lockedMessage, setLockedMessage] = React.useState("");
 
-    const handleLockedLevelClick = async () => {
+    const handleLockedLevelClick = async (levelType) => {
+        const msg = levelType === 'advanced'
+            ? 'Complete the Intermediate level to unlock'
+            : 'Complete the Beginner level to unlock';
+
+        setLockedMessage(msg);
         try {
             await Toast.show({
-                text: '* unlocking after completing the beginner level *',
+                text: msg,
                 duration: 'long',
                 position: 'center'
             });
@@ -478,7 +484,7 @@ const Home = () => {
                     {/* Intermediate Option (Locked) */}
                     <button
                         className="action-btn"
-                        onClick={handleLockedLevelClick}
+                        onClick={() => handleLockedLevelClick('intermediate')}
                         style={{
                             background: 'rgba(255, 255, 255, 0.55)',
                             backdropFilter: 'blur(8px)',
@@ -497,7 +503,7 @@ const Home = () => {
                     {/* Advanced Option (Locked) */}
                     <button
                         className="action-btn"
-                        onClick={handleLockedLevelClick}
+                        onClick={() => handleLockedLevelClick('advanced')}
                         style={{
                             background: 'rgba(255, 255, 255, 0.55)',
                             backdropFilter: 'blur(8px)',
@@ -638,7 +644,7 @@ const Home = () => {
             <ConfirmModal
                 isOpen={showLockedModal}
                 title="Level Locked"
-                message="* unlocking after completing the beginner level *"
+                message={lockedMessage}
                 onConfirm={() => setShowLockedModal(false)}
                 confirmText="OK"
                 showCancel={false}
