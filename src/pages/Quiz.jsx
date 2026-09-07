@@ -135,7 +135,7 @@ const Quiz = () => {
             } else {
                 finishQuiz(correct ? score + 1 : score);
             }
-        }, 2500);
+        }, 1000);
     };
 
     const [adLoadingAction, setAdLoadingAction] = useState(null); // 'skip' or 'hint' or null
@@ -216,17 +216,16 @@ const Quiz = () => {
 
     // ...
 
-    const finishQuiz = async (finalScore) => {
-        // Show Interstitial Ad upon completion
-        try {
-            await AdMobService.showInterstitial();
-        } catch (e) {
-            console.error("Interstitial Ad failed:", e);
-        }
-
+    const finishQuiz = (finalScore) => {
+        // Immediately render the results screen & save progress without blocking
         setQuizFinished(true);
         const passed = (finalScore / questions.length) >= 0.5;
         saveProgress(finalScore, passed);
+
+        // Show Interstitial Ad in background
+        AdMobService.showInterstitial().catch(e => {
+            console.error("Interstitial Ad failed:", e);
+        });
     };
 
     const saveProgress = (finalScore, passed) => {
