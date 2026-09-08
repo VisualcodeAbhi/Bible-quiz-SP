@@ -297,8 +297,8 @@ const Statistics = () => {
                 </div>
             </div>
 
-            {/* Main Content Container */}
-            <div style={{ maxWidth: '600px', margin: '0 auto', padding: '0' }}>
+            {/* Main Content Container with comfortable side padding */}
+            <div style={{ maxWidth: '600px', margin: '0 auto', padding: '12px 16px' }}>
                 
                 {/* Tab Switcher */}
                 <div style={{
