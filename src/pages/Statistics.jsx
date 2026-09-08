@@ -220,21 +220,30 @@ const Statistics = () => {
     }, [statsData.detailedBooks, bookFilter, searchQuery]);
 
     return (
-        <div style={{
-            minHeight: '100vh',
-            background: 'linear-gradient(180deg, #0b111e 0%, #162447 50%, #1f4068 100%)',
-            color: '#fff',
-            fontFamily: 'Inter, system-ui, sans-serif',
-            paddingBottom: '80px',
-            boxSizing: 'border-box'
-        }}>
+        <div 
+            className="stats-bg-wrapper"
+            style={{
+                width: '100%',
+                height: '100%',
+                minHeight: '100vh',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                WebkitOverflowScrolling: 'touch',
+                background: 'linear-gradient(180deg, #0b111e 0%, #162447 50%, #1f4068 100%)',
+                color: '#fff',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                paddingBottom: '90px',
+                boxSizing: 'border-box'
+            }}
+        >
             {/* Top Navigation Header */}
             <div style={{
                 position: 'sticky',
                 top: 0,
                 zIndex: 100,
-                background: 'rgba(11, 17, 30, 0.9)',
+                background: 'rgba(11, 17, 30, 0.95)',
                 backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
                 borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                 padding: '45px 15px 12px 15px',
                 display: 'flex',
@@ -288,8 +297,8 @@ const Statistics = () => {
                 </div>
             </div>
 
-            {/* Main Content Container with 10px Padding */}
-            <div style={{ maxWidth: '600px', margin: '0 auto', padding: '10px' }}>
+            {/* Main Content Container */}
+            <div style={{ maxWidth: '600px', margin: '0 auto', padding: '0' }}>
                 
                 {/* Tab Switcher */}
                 <div style={{
