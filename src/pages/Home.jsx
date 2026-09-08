@@ -309,7 +309,7 @@ const Home = () => {
 
                     {/* Statistics Icon (Below Store Button) */}
                     <div onClick={() => navigate('/statistics')} style={{
-                        marginTop: '8px',
+                        marginTop: '10px',
                         cursor: 'pointer',
                         background: 'rgba(255, 255, 255, 0.2)',
                         backdropFilter: 'blur(5px)',
