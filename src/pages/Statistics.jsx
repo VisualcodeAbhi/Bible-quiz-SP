@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { supabase } from '../lib/supabaseClient';
+import UserAvatar from '../components/UserAvatar';
 import { 
     BIBLE_BOOKS, 
     TOTAL_BIBLE_CHAPTERS, 
@@ -278,23 +279,12 @@ const Statistics = () => {
                 </div>
 
                 {/* Profile Pill */}
-                <div style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    border: '2px solid #38ef7d',
-                    background: '#1e293b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}>
-                    {userPhoto ? (
-                        <img src={userPhoto} alt="User" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                        <span style={{ fontSize: '18px' }}>👤</span>
-                    )}
-                </div>
+                <UserAvatar
+                    src={userPhoto}
+                    name={userName || 'You'}
+                    size={38}
+                    border="2px solid #38ef7d"
+                />
             </div>
 
             {/* Main Content Container with comfortable side padding */}
@@ -790,20 +780,13 @@ const Statistics = () => {
                                             boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
                                         }}>
                                             <div style={{ fontSize: '18px' }}>🥈</div>
-                                            <div style={{
-                                                width: '38px',
-                                                height: '38px',
-                                                borderRadius: '50%',
-                                                margin: '0 auto 4px',
-                                                overflow: 'hidden',
-                                                border: '2px solid #cbd5e1',
-                                                background: '#334155'
-                                            }}>
-                                                {leaderboardUsers[1]?.photo ? (
-                                                    <img src={leaderboardUsers[1].photo} alt="P2" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                ) : (
-                                                    <span style={{ lineHeight: '38px', fontSize: '16px' }}>👤</span>
-                                                )}
+                                            <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 4px' }}>
+                                                <UserAvatar
+                                                    src={leaderboardUsers[1]?.photo}
+                                                    name={leaderboardUsers[1]?.name || 'Player 2'}
+                                                    size={38}
+                                                    border="2px solid #cbd5e1"
+                                                />
                                             </div>
                                             <div style={{ fontSize: '11px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {leaderboardUsers[1]?.name}
@@ -826,20 +809,14 @@ const Statistics = () => {
                                             boxShadow: '0 8px 25px rgba(245, 158, 11, 0.35)'
                                         }}>
                                             <div style={{ fontSize: '24px', transform: 'translateY(-4px)' }}>👑</div>
-                                            <div style={{
-                                                width: '46px',
-                                                height: '46px',
-                                                borderRadius: '50%',
-                                                margin: '0 auto 4px',
-                                                overflow: 'hidden',
-                                                border: '2px solid #f59e0b',
-                                                background: '#334155'
-                                            }}>
-                                                {leaderboardUsers[0]?.photo ? (
-                                                    <img src={leaderboardUsers[0].photo} alt="P1" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                ) : (
-                                                    <span style={{ lineHeight: '46px', fontSize: '20px' }}>👤</span>
-                                                )}
+                                            <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 4px' }}>
+                                                <UserAvatar
+                                                    src={leaderboardUsers[0]?.photo}
+                                                    name={leaderboardUsers[0]?.name || 'Player 1'}
+                                                    size={46}
+                                                    fontSize="19px"
+                                                    border="2px solid #f59e0b"
+                                                />
                                             </div>
                                             <div style={{ fontSize: '12px', fontWeight: '800', color: '#fef08a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {leaderboardUsers[0]?.name}
@@ -861,20 +838,13 @@ const Statistics = () => {
                                             boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
                                         }}>
                                             <div style={{ fontSize: '18px' }}>🥉</div>
-                                            <div style={{
-                                                width: '38px',
-                                                height: '38px',
-                                                borderRadius: '50%',
-                                                margin: '0 auto 4px',
-                                                overflow: 'hidden',
-                                                border: '2px solid #d97706',
-                                                background: '#334155'
-                                            }}>
-                                                {leaderboardUsers[2]?.photo ? (
-                                                    <img src={leaderboardUsers[2].photo} alt="P3" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                ) : (
-                                                    <span style={{ lineHeight: '38px', fontSize: '16px' }}>👤</span>
-                                                )}
+                                            <div style={{ display: 'flex', justifyContent: 'center', margin: '0 auto 4px' }}>
+                                                <UserAvatar
+                                                    src={leaderboardUsers[2]?.photo}
+                                                    name={leaderboardUsers[2]?.name || 'Player 3'}
+                                                    size={38}
+                                                    border="2px solid #d97706"
+                                                />
                                             </div>
                                             <div style={{ fontSize: '11px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                                 {leaderboardUsers[2]?.name}
@@ -918,23 +888,12 @@ const Statistics = () => {
                                                         #{rank}
                                                     </span>
 
-                                                    <div style={{
-                                                        width: '36px',
-                                                        height: '36px',
-                                                        borderRadius: '50%',
-                                                        overflow: 'hidden',
-                                                        background: '#1e293b',
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        border: '1px solid rgba(255,255,255,0.2)'
-                                                    }}>
-                                                        {user.photo ? (
-                                                            <img src={user.photo} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                                        ) : (
-                                                            <span>👤</span>
-                                                        )}
-                                                    </div>
+                                                    <UserAvatar
+                                                        src={user.photo}
+                                                        name={user.name}
+                                                        size={36}
+                                                        border="1px solid rgba(255,255,255,0.2)"
+                                                    />
 
                                                     <div>
                                                         <div style={{ fontSize: '13px', fontWeight: '700', color: user.isCurrent ? '#38ef7d' : '#fff' }}>

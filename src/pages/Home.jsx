@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import ConfirmModal from '../components/ConfirmModal';
+import UserAvatar from '../components/UserAvatar';
 
 import { App } from '@capacitor/app';
 import { Toast } from '@capacitor/toast';
@@ -207,26 +208,15 @@ const Home = () => {
                 pointerEvents: 'none'
             }}>
                 {/* Profile Circle (Click to edit PHOTO) */}
-                <div onClick={openPhotoEdit} style={{
-                    width: '60px',
-                    height: '60px',
-                    borderRadius: '50%',
-                    margin: '0 20px', // Removed vertical margin to align better with expanded header
-                    background: '#999',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    overflow: 'hidden',
-                    border: '2px solid white',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-                    cursor: 'pointer',
-                    pointerEvents: 'auto'
-                }}>
-                    {userPhoto ? (
-                        <img src={userPhoto} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                        <span style={{ fontSize: '12px', color: 'white' }}>profile</span>
-                    )}
+                <div onClick={openPhotoEdit} style={{ margin: '0 20px', cursor: 'pointer', pointerEvents: 'auto' }}>
+                    <UserAvatar
+                        src={userPhoto}
+                        name={userName || 'User'}
+                        size={60}
+                        fontSize="24px"
+                        border="2px solid white"
+                        style={{ boxShadow: '0 2px 5px rgba(0,0,0,0.3)' }}
+                    />
                 </div>
 
                 {/* User Name Badge (Click to edit NAME - if unlocked) */}
@@ -402,7 +392,7 @@ const Home = () => {
                             alignItems: 'center'
                         }}>
                             {editPhoto ? (
-                                <img src={editPhoto} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img src={editPhoto} alt="Preview" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             ) : (
                                 <span style={{ color: '#aaa', fontSize: '30px' }}>📷</span>
                             )}
