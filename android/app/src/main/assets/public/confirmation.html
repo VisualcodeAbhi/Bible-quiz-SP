@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Email Verified - Bible Quiz</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         * {
@@ -148,22 +149,58 @@
         <h2 id="titleText">Email Verified!</h2>
         <p id="descText">Your email has been successfully confirmed. You're all set to play Bible Quiz!</p>
 
-        <!-- Deep Link Button to Redirect to App Home -->
-        <a id="appRedirectLink" href="biblequiz://home" style="text-decoration: none;">
-            <button class="btn-continue" type="button">
-                <span>Continue to Home</span>
-                <span>➔</span>
-            </button>
-        </a>
+        <!-- Continue Button -->
+        <button id="btnContinue" class="btn-continue" type="button">
+            <span>Continue to Home</span>
+            <span>➔</span>
+        </button>
 
         <div class="countdown" id="countdownText">Redirecting to app in 3s...</div>
         <p class="subtext">If the app doesn't open automatically, tap the button above.</p>
     </div>
 
     <script>
+        // Initialize Supabase Client to capture and save session into localStorage
+        const SUPABASE_URL = 'https://pxzkmwrbqtgyojsephtn.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB4emttd3JicXRneW9qc2VwaHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MDg4MjAsImV4cCI6MjA4MTI4NDgyMH0.GzBeOlCbMUcDG2EC8RS7TEJsVFcrU3BX3bEM-Mn3PV4';
+
+        if (window.supabase) {
+            try {
+                window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } catch (err) {
+                console.warn("Supabase init error on confirmation page:", err);
+            }
+        }
+
         // Check for error parameters in URL (Supabase appends error description)
         const params = new URLSearchParams(window.location.search);
         const error = params.get('error_description') || params.get('error');
+
+        const btnContinue = document.getElementById("btnContinue");
+        const countdownEl = document.getElementById("countdownText");
+
+        function handleRedirect() {
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const isNativeCapacitor = window.Capacitor !== undefined;
+            const query = window.location.search || '';
+            const hash = window.location.hash || '';
+            const webHomeUrl = window.location.origin + '/' + query + hash;
+            const nativeDeepLink = 'biblequiz://home' + query + hash;
+
+            countdownEl.innerText = "Opening Bible Quiz...";
+
+            if (isMobile && !isNativeCapacitor) {
+                // Try launching native Android / iOS deep link
+                window.location.href = nativeDeepLink;
+                // Fallback to web home if native app doesn't catch it
+                setTimeout(() => {
+                    window.location.href = webHomeUrl;
+                }, 1200);
+            } else {
+                // Desktop browser or localhost or inside app -> Navigate to web root
+                window.location.href = webHomeUrl;
+            }
+        }
 
         if (error) {
             document.getElementById("titleText").innerText = "Verification Failed";
@@ -171,37 +208,28 @@
             document.getElementById("statusIcon").style.background = "linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)";
             document.getElementById("statusIcon").style.boxShadow = "0 10px 25px rgba(239, 68, 68, 0.4)";
             document.getElementById("iconText").innerText = "✕";
-            document.getElementById("countdownText").style.display = "none";
-            document.querySelector(".btn-continue").innerText = "Return to App";
+            countdownEl.style.display = "none";
+            btnContinue.innerText = "Return to App";
+            btnContinue.addEventListener('click', () => {
+                window.location.href = window.location.origin + '/';
+            });
         } else {
-            // Construct deep link carrying tokens/params so the app can auto-login and open Home
-            const query = window.location.search || '';
-            const hash = window.location.hash || '';
-            const deepLinkUrl = 'biblequiz://home' + query + hash;
-            
-            const redirectLink = document.getElementById("appRedirectLink");
-            redirectLink.href = deepLinkUrl;
-
-            // Auto-redirect countdown
+            // Auto-redirect countdown (3 seconds)
             let timeLeft = 3;
-            const countdownEl = document.getElementById("countdownText");
-            
             const timer = setInterval(() => {
                 timeLeft -= 1;
                 if (timeLeft > 0) {
                     countdownEl.innerText = `Redirecting to app in ${timeLeft}s...`;
                 } else {
                     clearInterval(timer);
-                    countdownEl.innerText = `Opening Bible Quiz...`;
-                    window.location.href = deepLinkUrl;
+                    handleRedirect();
                 }
             }, 1000);
 
-            // If user clicks the button manually, navigate immediately
-            redirectLink.addEventListener('click', (e) => {
+            // Manual button click
+            btnContinue.addEventListener('click', () => {
                 clearInterval(timer);
-                countdownEl.innerText = `Opening Bible Quiz...`;
-                window.location.href = deepLinkUrl;
+                handleRedirect();
             });
         }
     </script>
