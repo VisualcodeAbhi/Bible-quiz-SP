@@ -201,7 +201,7 @@ function AppContent() {
                     }
 
                     const { data: { session: activeSession } } = await supabase.auth.getSession();
-                    if (activeSession && (window.location.pathname === '/auth' || location.pathname === '/auth')) {
+                    if (activeSession || urlString.includes('biblequiz://home')) {
                         navigate('/', { replace: true });
                     }
                 }
