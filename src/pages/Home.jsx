@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import ConfirmModal from '../components/ConfirmModal';
 import UserAvatar from '../components/UserAvatar';
+import { compressAvatar } from '../lib/imageCompressor';
 
 import { App } from '@capacitor/app';
 import { Toast } from '@capacitor/toast';
@@ -109,14 +110,17 @@ const Home = () => {
 
     // ... (handlers for photo/name edit unchanged)
 
-    const handlePhotoChange = (e) => {
+    const handlePhotoChange = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setEditPhoto(reader.result);
-            };
-            reader.readAsDataURL(file);
+            try {
+                const compressed = await compressAvatar(file, 160, 0.75);
+                if (compressed) {
+                    setEditPhoto(compressed);
+                }
+            } catch (err) {
+                console.error("Error compressing photo:", err);
+            }
         }
     };
 

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import ConfirmModal from '../components/ConfirmModal';
+import { compressAvatar } from '../lib/imageCompressor';
 
 const GameContext = createContext();
 
@@ -171,7 +172,30 @@ export const GameProvider = ({ children }) => {
             const userProfileName = (cloud.userName && cloud.userName !== "Guest") 
                 ? cloud.userName 
                 : (storedLocalName && storedLocalName !== "Guest" ? storedLocalName : defaultName);
-            const userPhoto = cloud.userPhoto || googlePhoto || localStorage.getItem('bibleQuiz_userPhoto') || null;
+            let userPhoto = cloud.userPhoto || googlePhoto || localStorage.getItem('bibleQuiz_userPhoto') || null;
+            if (userPhoto && typeof userPhoto === 'string' && userPhoto.startsWith('data:image') && userPhoto.length > 20000) {
+                try {
+                    const compressed = await compressAvatar(userPhoto, 160, 0.75);
+                    if (compressed && compressed.length < userPhoto.length) {
+                        userPhoto = compressed;
+                        // Auto-shrink existing bloated database row in background
+                        if (activeSession?.user?.id) {
+                            supabase.from('profiles').update({
+                                game_data: {
+                                    ...cloud,
+                                    userPhoto: compressed,
+                                    last_updated: Date.now()
+                                },
+                                updated_at: new Date()
+                            }).eq('id', activeSession.user.id).then(() => {
+                                console.log("Auto-shrunk bloated cloud avatar in database!");
+                            });
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Avatar auto-compression failed:", err);
+                }
+            }
             const userProgress = cloud.progress || {};
             const userInfinite = (cloud.infiniteLivesUntil && parseInt(cloud.infiniteLivesUntil, 10) > Date.now()) ? parseInt(cloud.infiniteLivesUntil, 10) : null;
 
@@ -359,9 +383,11 @@ export const GameProvider = ({ children }) => {
             localStorage.setItem('bibleQuiz_userName', updatedName);
         }
         if (photo) {
-            updatedPhoto = photo;
-            setUserPhoto(photo);
-            localStorage.setItem('bibleQuiz_userPhoto', photo);
+            const compressedPhoto = await compressAvatar(photo, 160, 0.75);
+            updatedPhoto = compressedPhoto;
+            setUserPhoto(compressedPhoto);
+            if (compressedPhoto) localStorage.setItem('bibleQuiz_userPhoto', compressedPhoto);
+            else localStorage.removeItem('bibleQuiz_userPhoto');
         }
 
         // Force Immediate Cloud Save
