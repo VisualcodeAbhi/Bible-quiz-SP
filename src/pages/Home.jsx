@@ -5,6 +5,7 @@ import { useGame } from '../context/GameContext';
 import ConfirmModal from '../components/ConfirmModal';
 import UserAvatar from '../components/UserAvatar';
 import { compressAvatar } from '../lib/imageCompressor';
+import appSettings from '../assets/data/appSettings.json';
 
 import { App } from '@capacitor/app';
 import { Toast } from '@capacitor/toast';
@@ -176,9 +177,35 @@ const Home = () => {
 
 
     // Difficulty & Modal States
+    const [selectedDifficulty, setSelectedDifficulty] = React.useState('beginner');
     const [showTestamentModal, setShowTestamentModal] = React.useState(false);
     const [showLockedModal, setShowLockedModal] = React.useState(false);
     const [lockedMessage, setLockedMessage] = React.useState("");
+    const [currentSettings, setCurrentSettings] = React.useState(appSettings || { intermediateEnabled: true, advancedEnabled: true });
+
+    React.useEffect(() => {
+        if (appSettings) {
+            setCurrentSettings(appSettings);
+        }
+        // Fetch live config from GitHub so any changes made on GitHub or Git update the mobile app in real-time
+        const fetchLiveSettings = async () => {
+            try {
+                const res = await fetch(`https://raw.githubusercontent.com/VisualcodeAbhi/Bible-quiz-SP/main/src/assets/data/appSettings.json?t=${Date.now()}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && typeof data.intermediateEnabled === 'boolean') {
+                        setCurrentSettings(data);
+                    }
+                }
+            } catch (e) {
+                // Graceful fallback to local JSON
+            }
+        };
+        fetchLiveSettings();
+    }, []);
+
+    const intermediateEnabled = Boolean(currentSettings?.intermediateEnabled);
+    const advancedEnabled = Boolean(currentSettings?.advancedEnabled);
 
     const handleLockedLevelClick = async (levelType) => {
         const msg = levelType === 'advanced'
@@ -502,7 +529,10 @@ const Home = () => {
                     {/* Beginner Option (Unlocked) */}
                     <button
                         className="action-btn"
-                        onClick={() => setShowTestamentModal(true)}
+                        onClick={() => {
+                            setSelectedDifficulty('beginner');
+                            setShowTestamentModal(true);
+                        }}
                         style={{
                             background: 'linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%)',
                             border: '2px solid #38ef7d',
@@ -517,38 +547,60 @@ const Home = () => {
                         </span>
                     </button>
 
-                    {/* Intermediate Option (Locked) */}
+                    {/* Intermediate Option (Controlled by appSettings.json) */}
                     <button
                         className="action-btn"
-                        onClick={() => handleLockedLevelClick('intermediate')}
-                        style={{
+                        onClick={() => {
+                            if (intermediateEnabled) {
+                                setSelectedDifficulty('intermediate');
+                                setShowTestamentModal(true);
+                            } else {
+                                handleLockedLevelClick('intermediate');
+                            }
+                        }}
+                        style={intermediateEnabled ? {
+                            background: 'linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)',
+                            border: '2px solid #f59e0b',
+                            boxShadow: '0 6px 16px rgba(245, 158, 11, 0.25)'
+                        } : {
                             background: 'rgba(255, 255, 255, 0.55)',
                             backdropFilter: 'blur(8px)',
                             border: '1px solid rgba(255, 255, 255, 0.4)',
                             opacity: 0.85
                         }}
                     >
-                        <span className="btn-main-text" style={{ color: '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            🔒 Intermediate
+                        <span className="btn-main-text" style={{ color: intermediateEnabled ? '#d97706' : '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {intermediateEnabled ? '⚡' : '🔒'} Intermediate
                         </span>
                         <span className="btn-sub-text" style={{ color: '#666' }}>
                             మధ్యస్థ స్థాయి
                         </span>
                     </button>
 
-                    {/* Advanced Option (Locked) */}
+                    {/* Advanced Option (Controlled by appSettings.json) */}
                     <button
                         className="action-btn"
-                        onClick={() => handleLockedLevelClick('advanced')}
-                        style={{
+                        onClick={() => {
+                            if (advancedEnabled) {
+                                setSelectedDifficulty('advanced');
+                                setShowTestamentModal(true);
+                            } else {
+                                handleLockedLevelClick('advanced');
+                            }
+                        }}
+                        style={advancedEnabled ? {
+                            background: 'linear-gradient(135deg, #ffffff 0%, #fef2f2 100%)',
+                            border: '2px solid #ef4444',
+                            boxShadow: '0 6px 16px rgba(239, 68, 68, 0.25)'
+                        } : {
                             background: 'rgba(255, 255, 255, 0.55)',
                             backdropFilter: 'blur(8px)',
                             border: '1px solid rgba(255, 255, 255, 0.4)',
                             opacity: 0.85
                         }}
                     >
-                        <span className="btn-main-text" style={{ color: '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            🔒 Advanced
+                        <span className="btn-main-text" style={{ color: advancedEnabled ? '#dc2626' : '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {advancedEnabled ? '🔥' : '🔒'} Advanced
                         </span>
                         <span className="btn-sub-text" style={{ color: '#666' }}>
                             ఉన్నత స్థాయి
@@ -557,7 +609,7 @@ const Home = () => {
                 </div>
             </div>
 
-            {/* Testament Selection Modal for Beginner Mode */}
+            {/* Testament Selection Modal */}
             {showTestamentModal && (
                 <div style={{
                     position: 'fixed',
@@ -609,7 +661,7 @@ const Home = () => {
 
                         <div style={{ fontSize: '36px', marginBottom: '10px' }}>📖</div>
                         <h2 style={{ color: '#1a237e', margin: '0 0 5px 0', fontSize: '22px', fontWeight: 'bold' }}>
-                            Select Testament
+                            Select Testament {selectedDifficulty !== 'beginner' && `(${selectedDifficulty.toUpperCase()})`}
                         </h2>
                         <p style={{ color: '#666', margin: '0 0 25px 0', fontSize: '14px' }}>
                             నిబంధనను ఎంచుకోండి
@@ -620,7 +672,8 @@ const Home = () => {
                                 className="action-btn"
                                 onClick={() => {
                                     setShowTestamentModal(false);
-                                    navigate('/ot');
+                                    const path = selectedDifficulty === 'beginner' ? '/ot' : `/${selectedDifficulty}/ot`;
+                                    navigate(path);
                                 }}
                                 style={{
                                     background: 'linear-gradient(135deg, #d4b483 0%, #b08d55 100%)',
@@ -643,7 +696,8 @@ const Home = () => {
                                 className="action-btn"
                                 onClick={() => {
                                     setShowTestamentModal(false);
-                                    navigate('/nt');
+                                    const path = selectedDifficulty === 'beginner' ? '/nt' : `/${selectedDifficulty}/nt`;
+                                    navigate(path);
                                 }}
                                 style={{
                                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

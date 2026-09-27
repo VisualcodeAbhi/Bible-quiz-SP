@@ -105,6 +105,43 @@ function quizAdminApiPlugin() {
           return
         }
 
+        if (req.url === '/api/admin/get-app-settings') {
+          try {
+            const settingsPath = path.resolve(__dirname, 'src/assets/data/appSettings.json')
+            let settings = { intermediateEnabled: true, advancedEnabled: true }
+            if (fs.existsSync(settingsPath)) {
+              settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'))
+            }
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ success: true, settings }))
+            return
+          } catch (err) {
+            res.statusCode = 500
+            res.setHeader('Content-Type', 'application/json')
+            res.end(JSON.stringify({ success: false, error: err.message }))
+            return
+          }
+        }
+
+        if (req.url === '/api/admin/save-app-settings' && req.method === 'POST') {
+          let body = ''
+          req.on('data', chunk => { body += chunk })
+          req.on('end', () => {
+            try {
+              const payload = JSON.parse(body)
+              const settingsPath = path.resolve(__dirname, 'src/assets/data/appSettings.json')
+              fs.writeFileSync(settingsPath, JSON.stringify(payload, null, 2), 'utf8')
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: true, settings: payload }))
+            } catch (err) {
+              res.statusCode = 500
+              res.setHeader('Content-Type', 'application/json')
+              res.end(JSON.stringify({ success: false, error: err.message }))
+            }
+          })
+          return
+        }
+
         next()
       })
     }

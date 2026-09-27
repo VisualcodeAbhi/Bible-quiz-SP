@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BIBLE_BOOKS } from '../bibleBooksData';
 import { loadQuizBookData } from '../lib/quizDataLoader';
+import initialAppSettings from '../assets/data/appSettings.json';
 
 const DIFFICULTIES = [
     { id: 'beginner', label: 'Beginner', color: '#10B981', badge: '🟢' },
@@ -11,6 +12,47 @@ const DIFFICULTIES = [
 
 export default function AdminEditor() {
     const navigate = useNavigate();
+
+    // App Level On/Off Settings State
+    const [levelSettings, setLevelSettings] = useState(initialAppSettings || { intermediateEnabled: true, advancedEnabled: true });
+
+    useEffect(() => {
+        fetch('/api/admin/get-app-settings')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.settings) {
+                    setLevelSettings(data.settings);
+                }
+            })
+            .catch(() => {});
+    }, []);
+
+    const handleToggleLevelLock = async (levelKey) => {
+        const newSettings = {
+            ...levelSettings,
+            [levelKey]: !levelSettings[levelKey]
+        };
+        setLevelSettings(newSettings);
+
+        try {
+            const res = await fetch('/api/admin/save-app-settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newSettings)
+            });
+            if (res.ok) {
+                setStatusMessage({
+                    type: 'success',
+                    text: `✅ ${levelKey === 'intermediateEnabled' ? 'Intermediate' : 'Advanced'} level is now ${newSettings[levelKey] ? 'ENABLED (Unlocked)' : 'DISABLED (Locked)'}`
+                });
+            }
+        } catch (e) {
+            setStatusMessage({
+                type: 'warning',
+                text: `Updated locally: ${newSettings[levelKey] ? 'Enabled' : 'Disabled'}`
+            });
+        }
+    };
 
     // 1. Selector States
     const [difficulty, setDifficulty] = useState('intermediate');
@@ -482,6 +524,51 @@ export default function AdminEditor() {
                     >
                         📋 Copy JSON
                     </button>
+                    {/* Level On/Off Toggles */}
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', background: 'rgba(255,255,255,0.06)', padding: '3px 8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <span style={{ fontSize: '11px', color: '#94A3B8', fontWeight: 'bold' }}>APP LEVELS:</span>
+                        <button
+                            type="button"
+                            onClick={() => handleToggleLevelLock('intermediateEnabled')}
+                            style={{
+                                padding: '5px 10px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                background: levelSettings?.intermediateEnabled ? '#F59E0B' : '#475569',
+                                color: '#FFFFFF',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}
+                            title="Click to Lock/Unlock Intermediate level in the Mobile App"
+                        >
+                            {levelSettings?.intermediateEnabled ? '⚡ Interm: ON' : '🔒 Interm: OFF'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => handleToggleLevelLock('advancedEnabled')}
+                            style={{
+                                padding: '5px 10px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                background: levelSettings?.advancedEnabled ? '#EF4444' : '#475569',
+                                color: '#FFFFFF',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}
+                            title="Click to Lock/Unlock Advanced level in the Mobile App"
+                        >
+                            {levelSettings?.advancedEnabled ? '🔥 Adv: ON' : '🔒 Adv: OFF'}
+                        </button>
+                    </div>
+
                     <button
                         onClick={() => setShowBulkModal(true)}
                         style={{ ...styles.actionBtn, ...styles.bulkBtn }}
