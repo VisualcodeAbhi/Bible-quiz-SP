@@ -332,12 +332,10 @@ export default function AdminEditor() {
             }
             throw new Error('Local API endpoint offline');
         } catch (err) {
-            // Running on Vercel / remote: Trigger file download
-            handleDownloadJson();
             setHasUnsavedChanges(false);
             setStatusMessage({
-                type: 'warning',
-                text: `💾 Saved in browser memory & downloaded ${activeBookMeta.file}.json! (Since you are on Vercel cloud, open on http://localhost:5173/admin to auto-write directly to files).`
+                type: 'success',
+                text: `✅ Saved in browser storage! (To save directly to project files on disk, use http://localhost:5173/admin)`
             });
         }
     };
@@ -413,13 +411,14 @@ export default function AdminEditor() {
     // Keyboard shortcut for saving (Ctrl+S / Cmd+S)
     useEffect(() => {
         const handleKeyDown = (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
                 e.preventDefault();
+                e.stopPropagation();
                 handleSaveToDisk();
             }
         };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        window.addEventListener('keydown', handleKeyDown, { capture: true });
+        return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
     }, [fullBookData, activeBookMeta, difficulty]);
 
     return (
