@@ -181,31 +181,9 @@ const Home = () => {
     const [showTestamentModal, setShowTestamentModal] = React.useState(false);
     const [showLockedModal, setShowLockedModal] = React.useState(false);
     const [lockedMessage, setLockedMessage] = React.useState("");
-    const [currentSettings, setCurrentSettings] = React.useState(appSettings || { intermediateEnabled: false, advancedEnabled: false });
 
-    React.useEffect(() => {
-        if (appSettings) {
-            setCurrentSettings(appSettings);
-        }
-        // Fetch live config from GitHub so any changes made on GitHub or Git update the mobile app in real-time
-        const fetchLiveSettings = async () => {
-            try {
-                const res = await fetch(`https://raw.githubusercontent.com/VisualcodeAbhi/Bible-quiz-SP/main/src/assets/data/appSettings.json?t=${Date.now()}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && typeof data.intermediateEnabled === 'boolean') {
-                        setCurrentSettings(data);
-                    }
-                }
-            } catch (e) {
-                // Graceful fallback to local JSON
-            }
-        };
-        fetchLiveSettings();
-    }, []);
-
-    const intermediateEnabled = Boolean(currentSettings?.intermediateEnabled);
-    const advancedEnabled = Boolean(currentSettings?.advancedEnabled);
+    const intermediateEnabled = Boolean(appSettings?.intermediateEnabled);
+    const advancedEnabled = Boolean(appSettings?.advancedEnabled);
 
     const handleLockedLevelClick = async (levelType) => {
         const msg = levelType === 'advanced'
