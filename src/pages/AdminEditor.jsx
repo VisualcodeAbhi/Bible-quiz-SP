@@ -587,17 +587,58 @@ export default function AdminEditor() {
                         <div style={styles.formCardHead}>
                             <div>
                                 <span style={styles.panelTitle}>
-                                    {editingIndex !== null ? `✏️ Editing Question #${editingIndex + 1}` : `➕ Add Question (Chapter ${selectedChapter})`}
+                                    {editingIndex !== null ? `✏️ EDITING QUESTION #${editingIndex + 1}` : `➕ ADD QUESTION (Ch ${selectedChapter})`}
                                 </span>
                                 <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '2px' }}>
                                     {activeBookMeta.name} ➔ Chapter {selectedChapter} ➔ {difficulty}
                                 </div>
                             </div>
-                            {editingIndex !== null && (
-                                <button onClick={resetForm} style={styles.cancelEditBtn}>
-                                    Cancel Edit
+
+                            {/* Top Action Buttons */}
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <button
+                                    type="button"
+                                    onClick={handleSaveQuestionToChapter}
+                                    style={{
+                                        padding: '8px 16px',
+                                        borderRadius: '8px',
+                                        border: 'none',
+                                        color: '#FFFFFF',
+                                        fontSize: '13px',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        backgroundColor: editingIndex !== null ? '#F59E0B' : '#10B981',
+                                        boxShadow: editingIndex !== null ? '0 2px 10px rgba(245, 158, 11, 0.35)' : '0 2px 10px rgba(16, 185, 129, 0.35)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        transition: 'all 0.15s'
+                                    }}
+                                >
+                                    {editingIndex !== null ? '💾 Update Question' : '➕ Add Question'}
                                 </button>
-                            )}
+                                {editingIndex !== null && (
+                                    <button onClick={resetForm} style={styles.cancelEditBtn}>
+                                        Cancel Edit
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={resetForm}
+                                    style={{
+                                        padding: '8px 12px',
+                                        borderRadius: '8px',
+                                        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                                        color: '#D1D5DB',
+                                        fontSize: '12px',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Clear
+                                </button>
+                            </div>
                         </div>
 
                         <form onSubmit={handleSaveQuestionToChapter} style={styles.formContainer}>
@@ -662,25 +703,6 @@ export default function AdminEditor() {
                                         </div>
                                     );
                                 })}
-                            </div>
-
-                            <div style={styles.formActionsRow}>
-                                <button
-                                    type="submit"
-                                    style={{
-                                        ...styles.formSubmitBtn,
-                                        backgroundColor: editingIndex !== null ? '#F59E0B' : '#10B981'
-                                    }}
-                                >
-                                    {editingIndex !== null ? '💾 Update Question' : '➕ Add Question'}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={resetForm}
-                                    style={styles.formClearBtn}
-                                >
-                                    Clear
-                                </button>
                             </div>
                         </form>
                     </div>
