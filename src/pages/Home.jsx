@@ -8,6 +8,7 @@ import { compressAvatar } from '../lib/imageCompressor';
 
 import { App } from '@capacitor/app';
 import { Toast } from '@capacitor/toast';
+import appSettings from '../assets/data/appSettings.json';
 
 // Global variable removed
 // let hasShownSplash = false;
@@ -178,6 +179,50 @@ const Home = () => {
     // Difficulty & Modal States
     const [selectedDifficulty, setSelectedDifficulty] = React.useState('beginner');
     const [showTestamentModal, setShowTestamentModal] = React.useState(false);
+    const [showLockedModal, setShowLockedModal] = React.useState(false);
+    const [lockedMessage, setLockedMessage] = React.useState("");
+    const [currentSettings, setCurrentSettings] = React.useState(appSettings || { intermediateEnabled: false, advancedEnabled: false });
+
+    React.useEffect(() => {
+        if (appSettings) {
+            setCurrentSettings(appSettings);
+        }
+        // Fetch live config from GitHub so any changes made on GitHub or Git update the mobile app in real-time
+        const fetchLiveSettings = async () => {
+            try {
+                const res = await fetch(`https://raw.githubusercontent.com/VisualcodeAbhi/Bible-quiz-SP/main/src/assets/data/appSettings.json?t=${Date.now()}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && typeof data.intermediateEnabled === 'boolean') {
+                        setCurrentSettings(data);
+                    }
+                }
+            } catch (e) {
+                // Graceful fallback to local JSON
+            }
+        };
+        fetchLiveSettings();
+    }, []);
+
+    const intermediateEnabled = Boolean(currentSettings?.intermediateEnabled);
+    const advancedEnabled = Boolean(currentSettings?.advancedEnabled);
+
+    const handleLockedLevelClick = async (levelType) => {
+        const msg = levelType === 'advanced'
+            ? 'Complete the Intermediate level to unlock'
+            : 'Complete the Beginner level to unlock';
+
+        setLockedMessage(msg);
+        try {
+            await Toast.show({
+                text: msg,
+                duration: 'long',
+                position: 'center'
+            });
+        } catch (e) {
+            setShowLockedModal(true);
+        }
+    };
 
     return (
         <div className="home-bg-wrapper">
@@ -503,42 +548,60 @@ const Home = () => {
                         </span>
                     </button>
 
-                    {/* Intermediate Option */}
+                    {/* Intermediate Option (Controlled by appSettings.json) */}
                     <button
                         className="action-btn"
                         onClick={() => {
-                            setSelectedDifficulty('intermediate');
-                            setShowTestamentModal(true);
+                            if (intermediateEnabled) {
+                                setSelectedDifficulty('intermediate');
+                                setShowTestamentModal(true);
+                            } else {
+                                handleLockedLevelClick('intermediate');
+                            }
                         }}
-                        style={{
+                        style={intermediateEnabled ? {
                             background: 'linear-gradient(135deg, #ffffff 0%, #fffbeb 100%)',
                             border: '2px solid #f59e0b',
                             boxShadow: '0 6px 16px rgba(245, 158, 11, 0.25)'
+                        } : {
+                            background: 'rgba(255, 255, 255, 0.55)',
+                            backdropFilter: 'blur(8px)',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            opacity: 0.85
                         }}
                     >
-                        <span className="btn-main-text" style={{ color: '#d97706', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            ⚡ Intermediate
+                        <span className="btn-main-text" style={{ color: intermediateEnabled ? '#d97706' : '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {intermediateEnabled ? '⚡' : '🔒'} Intermediate
                         </span>
                         <span className="btn-sub-text" style={{ color: '#666' }}>
                             మధ్యస్థ స్థాయి
                         </span>
                     </button>
 
-                    {/* Advanced Option */}
+                    {/* Advanced Option (Controlled by appSettings.json) */}
                     <button
                         className="action-btn"
                         onClick={() => {
-                            setSelectedDifficulty('advanced');
-                            setShowTestamentModal(true);
+                            if (advancedEnabled) {
+                                setSelectedDifficulty('advanced');
+                                setShowTestamentModal(true);
+                            } else {
+                                handleLockedLevelClick('advanced');
+                            }
                         }}
-                        style={{
+                        style={advancedEnabled ? {
                             background: 'linear-gradient(135deg, #ffffff 0%, #fef2f2 100%)',
                             border: '2px solid #ef4444',
                             boxShadow: '0 6px 16px rgba(239, 68, 68, 0.25)'
+                        } : {
+                            background: 'rgba(255, 255, 255, 0.55)',
+                            backdropFilter: 'blur(8px)',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            opacity: 0.85
                         }}
                     >
-                        <span className="btn-main-text" style={{ color: '#dc2626', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            🔥 Advanced
+                        <span className="btn-main-text" style={{ color: advancedEnabled ? '#dc2626' : '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            {advancedEnabled ? '🔥' : '🔒'} Advanced
                         </span>
                         <span className="btn-sub-text" style={{ color: '#666' }}>
                             ఉన్నత స్థాయి
@@ -659,6 +722,17 @@ const Home = () => {
             )}
 
             {/* Confirmation Modals */}
+
+            {/* Level Locked Alert Modal */}
+            <ConfirmModal
+                isOpen={showLockedModal}
+                title="Level Locked"
+                message={lockedMessage}
+                onConfirm={() => setShowLockedModal(false)}
+                confirmText="OK"
+                showCancel={false}
+                icon="🔒"
+            />
 
             <ConfirmModal
                 isOpen={showResetModal}
