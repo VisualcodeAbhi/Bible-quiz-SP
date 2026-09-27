@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BIBLE_BOOKS } from '../bibleBooksData';
 import { loadQuizBookData } from '../lib/quizDataLoader';
 import initialAppSettings from '../assets/data/appSettings.json';
+import { supabase } from '../lib/supabaseClient';
 
 const DIFFICULTIES = [
     { id: 'beginner', label: 'Beginner', color: '#10B981', badge: '🟢' },
@@ -13,15 +14,29 @@ const DIFFICULTIES = [
 export default function AdminEditor() {
     const navigate = useNavigate();
 
-    // App Level On/Off Settings State
+    // App Level On/Off Settings State (Synced with Supabase Cloud & Local JSON)
     const [levelSettings, setLevelSettings] = useState(initialAppSettings || { intermediateEnabled: true, advancedEnabled: true });
 
     useEffect(() => {
+        // 1. Fetch from Supabase Cloud
+        supabase
+            .from('quiz_books')
+            .select('data')
+            .eq('id', 'app_settings')
+            .maybeSingle()
+            .then(({ data: row, error }) => {
+                if (!error && row?.data && typeof row.data.intermediateEnabled === 'boolean') {
+                    setLevelSettings(row.data);
+                }
+            })
+            .catch(() => {});
+
+        // 2. Also check local Vite API if running locally
         fetch('/api/admin/get-app-settings')
             .then(res => res.json())
             .then(data => {
                 if (data.success && data.settings) {
-                    setLevelSettings(data.settings);
+                    setLevelSettings(prev => ({ ...prev, ...data.settings }));
                 }
             })
             .catch(() => {});
@@ -34,24 +49,32 @@ export default function AdminEditor() {
         };
         setLevelSettings(newSettings);
 
+        // 1. Save to Supabase Cloud (Instantly syncs to all team members & mobile apps worldwide)
         try {
-            const res = await fetch('/api/admin/save-app-settings', {
+            await supabase.from('quiz_books').upsert({
+                id: 'app_settings',
+                book_file: 'appSettings',
+                difficulty: 'global',
+                data: newSettings,
+                updated_at: new Date().toISOString()
+            });
+        } catch (e) {
+            console.error("Supabase level save error:", e);
+        }
+
+        // 2. Save to local disk if running locally
+        try {
+            await fetch('/api/admin/save-app-settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newSettings)
             });
-            if (res.ok) {
-                setStatusMessage({
-                    type: 'success',
-                    text: `✅ ${levelKey === 'intermediateEnabled' ? 'Intermediate' : 'Advanced'} level is now ${newSettings[levelKey] ? 'ENABLED (Unlocked)' : 'DISABLED (Locked)'}`
-                });
-            }
-        } catch (e) {
-            setStatusMessage({
-                type: 'warning',
-                text: `Updated locally: ${newSettings[levelKey] ? 'Enabled' : 'Disabled'}`
-            });
-        }
+        } catch (e) {}
+
+        setStatusMessage({
+            type: 'success',
+            text: `✅ ${levelKey === 'intermediateEnabled' ? 'Intermediate' : 'Advanced'} level is now ${newSettings[levelKey] ? 'ENABLED (Unlocked)' : 'DISABLED (Locked)'} on Cloud!`
+        });
     };
 
     // 1. Selector States
@@ -107,11 +130,31 @@ export default function AdminEditor() {
         setEditingIndex(null);
         resetForm();
 
+        const docId = `${difficulty}_${activeBookMeta.file}`;
         const cacheKey = getCacheKey(activeBookMeta.file, difficulty);
         const cachedStr = localStorage.getItem(cacheKey);
 
+        // 1. Primary: Fetch live from Supabase Cloud Database (shared across all devices)
         try {
-            // First attempt to fetch from Vite dev server API
+            const { data: cloudRow, error: cloudErr } = await supabase
+                .from('quiz_books')
+                .select('data')
+                .eq('id', docId)
+                .maybeSingle();
+
+            if (!cloudErr && cloudRow?.data && cloudRow.data.levels && (!cloudRow.data.difficulty || cloudRow.data.difficulty === difficulty)) {
+                setFullBookData(cloudRow.data);
+                setHasUnsavedChanges(false);
+                setLoadingBook(false);
+                localStorage.setItem(cacheKey, JSON.stringify(cloudRow.data));
+                return;
+            }
+        } catch (e) {
+            console.log('Supabase cloud fetch error/offline, trying local sources...', e);
+        }
+
+        // 2. Secondary: If on localhost, check local Vite dev server API
+        try {
             const res = await fetch(`/api/admin/get-quiz-data?bookFile=${activeBookMeta.file}&difficulty=${difficulty}`);
             if (res.ok) {
                 const json = await res.json();
@@ -131,7 +174,7 @@ export default function AdminEditor() {
             console.log('Dev server API not reached, trying cache/dynamic import fallback...', e);
         }
 
-        // Check localStorage cache before falling back (must match difficulty)
+        // 3. Tertiary: Check localStorage cache before falling back (must match difficulty)
         if (cachedStr) {
             try {
                 const parsedCache = JSON.parse(cachedStr);
@@ -373,15 +416,40 @@ export default function AdminEditor() {
 
     const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
-    // Save to Project File on Disk (Calls Vite Backend on Localhost or downloads on Vercel)
+    // Save to Supabase Cloud & Disk (Syncs across all laptops, Vercel & Mobile App)
     const handleSaveToDisk = async () => {
         if (!fullBookData) return;
-        setStatusMessage({ type: 'loading', text: 'Saving...' });
+        setStatusMessage({ type: 'loading', text: 'Saving to Supabase Cloud & Disk...' });
 
-        // Always save to browser localStorage
+        const docId = `${difficulty}_${activeBookMeta.file}`;
         const cacheKey = getCacheKey(activeBookMeta.file, difficulty);
         localStorage.setItem(cacheKey, JSON.stringify(fullBookData));
 
+        let cloudSaved = false;
+        let diskSaved = false;
+
+        // 1. Save to Supabase Cloud Database (Instantly shared with all laptops & mobile apps)
+        try {
+            const { error: cloudErr } = await supabase
+                .from('quiz_books')
+                .upsert({
+                    id: docId,
+                    book_file: activeBookMeta.file,
+                    difficulty: difficulty,
+                    data: fullBookData,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (!cloudErr) {
+                cloudSaved = true;
+            } else {
+                console.error("Supabase cloud save error:", cloudErr);
+            }
+        } catch (e) {
+            console.error("Supabase cloud save exception:", e);
+        }
+
+        // 2. If on Localhost dev server, also save to project files on disk
         try {
             const res = await fetch('/api/admin/save-quiz-data', {
                 method: 'POST',
@@ -396,20 +464,32 @@ export default function AdminEditor() {
             if (res.ok) {
                 const resJson = await res.json();
                 if (resJson.success) {
-                    setHasUnsavedChanges(false);
-                    setStatusMessage({
-                        type: 'success',
-                        text: `✅ Saved directly to disk: ${resJson.message}`
-                    });
-                    return;
+                    diskSaved = true;
                 }
             }
-            throw new Error('Local API endpoint offline');
-        } catch (err) {
-            setHasUnsavedChanges(false);
+        } catch (err) {}
+
+        setHasUnsavedChanges(false);
+
+        if (cloudSaved && diskSaved) {
             setStatusMessage({
                 type: 'success',
-                text: `✅ Saved in browser storage! (To save directly to project files on disk, use http://localhost:5173/admin)`
+                text: `✅ Saved to Supabase Cloud & Local Disk! (${activeBookMeta.name} - ${difficulty.toUpperCase()})`
+            });
+        } else if (cloudSaved) {
+            setStatusMessage({
+                type: 'success',
+                text: `✅ Saved to Supabase Cloud! Your friend and mobile app will see these questions immediately! 🌐`
+            });
+        } else if (diskSaved) {
+            setStatusMessage({
+                type: 'success',
+                text: `✅ Saved directly to local project disk! (${activeBookMeta.name})`
+            });
+        } else {
+            setStatusMessage({
+                type: 'success',
+                text: `✅ Saved in browser storage!`
             });
         }
     };

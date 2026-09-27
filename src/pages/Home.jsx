@@ -187,21 +187,28 @@ const Home = () => {
         if (appSettings) {
             setCurrentSettings(appSettings);
         }
-        // Fetch live config from GitHub so any changes made on GitHub or Git update the mobile app in real-time
-        const fetchLiveSettings = async () => {
-            try {
-                const res = await fetch(`https://raw.githubusercontent.com/VisualcodeAbhi/Bible-quiz-SP/main/src/assets/data/appSettings.json?t=${Date.now()}`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data && typeof data.intermediateEnabled === 'boolean') {
-                        setCurrentSettings(data);
-                    }
+        // 1. Fetch live config from Supabase Cloud (Instant real-time sync)
+        supabase
+            .from('quiz_books')
+            .select('data')
+            .eq('id', 'app_settings')
+            .maybeSingle()
+            .then(({ data: row, error }) => {
+                if (!error && row?.data && typeof row.data.intermediateEnabled === 'boolean') {
+                    setCurrentSettings(row.data);
                 }
-            } catch (e) {
-                // Graceful fallback to local JSON
-            }
-        };
-        fetchLiveSettings();
+            })
+            .catch(() => {});
+
+        // 2. Fallback: fetch live config from GitHub
+        fetch(`https://raw.githubusercontent.com/VisualcodeAbhi/Bible-quiz-SP/main/src/assets/data/appSettings.json?t=${Date.now()}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && typeof data.intermediateEnabled === 'boolean') {
+                    setCurrentSettings(prev => ({ ...prev, ...data }));
+                }
+            })
+            .catch(() => {});
     }, []);
 
     const intermediateEnabled = Boolean(currentSettings?.intermediateEnabled);
