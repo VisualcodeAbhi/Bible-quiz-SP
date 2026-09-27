@@ -418,14 +418,39 @@ export const GameProvider = ({ children }) => {
         setLives(l => (l < MAX_LIVES ? l + 1 : l));
     };
 
-    const updateLevelProgress = (bookName, level, data) => {
-        setProgress(prev => ({
-            ...prev,
-            [bookName]: {
-                ...(prev[bookName] || {}),
-                [level]: data
-            }
-        }));
+    const updateLevelProgress = (bookName, level, data, difficulty = 'beginner') => {
+        setProgress(prev => {
+            const diffKey = (difficulty || 'beginner').toLowerCase();
+            const currentDiffProgress = prev[diffKey] || (diffKey === 'beginner' ? prev : {}) || {};
+            const currentBookProgress = currentDiffProgress[bookName] || {};
+
+            return {
+                ...prev,
+                [diffKey]: {
+                    ...currentDiffProgress,
+                    [bookName]: {
+                        ...currentBookProgress,
+                        [level]: data
+                    }
+                },
+                // Backwards-compatible root level mirror for beginner
+                ...(diffKey === 'beginner' ? {
+                    [bookName]: {
+                        ...(prev[bookName] || {}),
+                        [level]: data
+                    }
+                } : {})
+            };
+        });
+    };
+
+    const getProgressForDifficulty = (difficulty = 'beginner', bookName = null) => {
+        const diffKey = (difficulty || 'beginner').toLowerCase();
+        const diffProgress = progress[diffKey] || (diffKey === 'beginner' ? progress : {}) || {};
+        if (bookName) {
+            return diffProgress[bookName] || {};
+        }
+        return diffProgress;
     };
 
     const resetProgress = async () => {
@@ -503,6 +528,7 @@ export const GameProvider = ({ children }) => {
         addLife,
         updateProfile,
         updateLevelProgress,
+        getProgressForDifficulty,
         resetProgress,
         totallyResetGame, // EXPOCED
         session,

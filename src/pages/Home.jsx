@@ -467,7 +467,7 @@ const Home = () => {
                                         border: 'none',
                                         borderRadius: '5px',
                                         fontSize: '16px',
-                                        marginTop: '5px'
+                                        marginTop: '10px'
                                     }}
                                 >
                                     Reset My Data

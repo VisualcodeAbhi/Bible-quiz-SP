@@ -1,11 +1,13 @@
 {
   "name": "bible-quiz-app",
-  "version": "1.0.8",
+  "version": "1.2.0",
   "main": "index.js",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "capgo:upload": "vite build && capgo bundle upload --zip -c default",
+    "live-update": "vite build && capgo bundle upload --zip -c default"
   },
   "keywords": [],
   "author": "",
@@ -18,17 +20,19 @@
     "@capacitor/cli": "^8.0.0",
     "@capacitor/core": "^8.0.0",
     "@capacitor/toast": "^8.0.0",
+    "@capgo/capacitor-updater": "^8.51.23",
     "@supabase/supabase-js": "^2.87.1",
     "firebase": "^12.6.0",
     "lottie-react": "^2.4.1",
-    "react": "^19.2.1",
+    "react": "19.2.1",
     "react-confetti": "^6.4.0",
-    "react-dom": "^19.2.1",
+    "react-dom": "19.2.1",
     "react-router-dom": "^7.10.1",
     "vite-plugin-pwa": "^1.2.0"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
+    "@capgo/cli": "^8.64.1",
     "@vitejs/plugin-basic-ssl": "^2.1.0",
     "@vitejs/plugin-react": "^4.7.0",
     "vite": "^6.4.1"

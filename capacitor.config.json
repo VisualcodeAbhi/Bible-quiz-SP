@@ -12,6 +12,11 @@
       "androidScaleType": "CENTER_CROP",
       "splashFullScreen": true,
       "splashImmersive": true
+    },
+    "CapacitorUpdater": {
+      "autoUpdate": true,
+      "statsUrl": "https://api.capgo.app",
+      "channel": "default"
     }
   }
 }

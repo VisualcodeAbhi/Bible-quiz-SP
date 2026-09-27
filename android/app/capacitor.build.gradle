@@ -12,6 +12,7 @@ dependencies {
     implementation project(':capacitor-community-admob')
     implementation project(':capacitor-app')
     implementation project(':capacitor-toast')
+    implementation project(':capgo-capacitor-updater')
 
 }
 

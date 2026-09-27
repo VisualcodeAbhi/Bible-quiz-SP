@@ -46,10 +46,14 @@ const shuffleQuestionsAndOptions = (rawQuestions) => {
     return preparedQuestions;
 };
 
+import { loadQuizBookData } from '../lib/quizDataLoader';
+
 const Quiz = () => {
-    const { book: bookFile, level } = useParams();
+    const { difficulty, book: bookFile, level } = useParams();
     const navigate = useNavigate();
-    const { lives, deductLife, hints, consumeHint, addHints, updateLevelProgress, progress } = useGame();
+    const { lives, deductLife, hints, consumeHint, addHints, updateLevelProgress, getProgressForDifficulty, progress } = useGame();
+
+    const basePath = difficulty ? `/${difficulty}` : '';
 
     const [bookData, setBookData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -96,12 +100,11 @@ const Quiz = () => {
             setDisabledOptions([]);
 
             try {
-                const [module] = await Promise.all([
-                    import(`../assets/data/${bookFile}.json`),
+                const [data] = await Promise.all([
+                    loadQuizBookData(bookFile, difficulty),
                     minDelay
                 ]);
 
-                const data = module.default || module;
                 setBookData(data);
 
                 const levelQuestions = data.levels?.[level];
@@ -117,7 +120,7 @@ const Quiz = () => {
             }
         };
         loadData();
-    }, [bookFile, level]);
+    }, [bookFile, level, difficulty]);
 
     // Cleanup options on question change
     useEffect(() => {
@@ -266,8 +269,9 @@ const Quiz = () => {
     const saveProgress = (finalScore, passed) => {
         const bookName = bookData.bookName;
         // Use Context for progress logic, delegating save to GameContext useEffect
-        const userProgress = progress || {};
-        const bookProgress = userProgress[bookName] || {};
+        const bookProgress = getProgressForDifficulty
+            ? getProgressForDifficulty(difficulty, bookName)
+            : ((progress || {})[bookName] || {});
 
         const previousData = bookProgress[level] || {};
         const wasCompleted = previousData.completed;
@@ -277,7 +281,7 @@ const Quiz = () => {
             score: finalScore
         };
 
-        updateLevelProgress(bookName, level, newData);
+        updateLevelProgress(bookName, level, newData, difficulty);
     };
 
 
@@ -323,7 +327,7 @@ const Quiz = () => {
                         {parseInt(level) < bookData.chapters && passed && (
                             <button className="action-btn" onClick={() => {
                                 AdMobService.showInterstitial().catch(() => {});
-                                navigate(`/quiz/${bookFile}/${parseInt(level) + 1}`, { replace: true });
+                                navigate(`${basePath}/quiz/${bookFile}/${parseInt(level) + 1}`, { replace: true });
                             }}>
                                 <span className="btn-main-text">Next Level</span>
                             </button>

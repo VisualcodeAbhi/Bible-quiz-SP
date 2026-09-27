@@ -4,24 +4,28 @@ import { bookNameMap } from '../bookNames';
 import Loader from '../components/Loader';
 import { ntFiles } from '../ntFiles';
 import { useGame } from '../context/GameContext';
+import { loadQuizBookData } from '../lib/quizDataLoader';
 
 const Levels = () => {
-    const { book: bookFile } = useParams();
+    const { difficulty, book: bookFile } = useParams();
     const navigate = useNavigate();
     const location = useLocation();
-    const { progress } = useGame();
+    const { progress, getProgressForDifficulty } = useGame();
     const [bookData, setBookData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [bookName, setBookName] = useState("");
+
+    const basePath = difficulty ? `/${difficulty}` : '';
+    const diffLabel = difficulty === 'intermediate' ? ' (Intermediate)' : difficulty === 'advanced' ? ' (Advanced)' : '';
 
     const handleBack = () => {
         if (location.state?.from === 'list') {
             navigate(-1);
         } else {
             if (ntFiles.includes(bookFile)) {
-                navigate('/nt', { replace: true });
+                navigate(`${basePath}/nt`, { replace: true });
             } else {
-                navigate('/ot', { replace: true });
+                navigate(`${basePath}/ot`, { replace: true });
             }
         }
     };
@@ -30,15 +34,12 @@ const Levels = () => {
         const loadData = async () => {
             const minDelay = new Promise(resolve => setTimeout(resolve, 800));
             try {
-                // Dynamic import of JSON data with minimum delay
-                const [module] = await Promise.all([
-                    import(`../assets/data/${bookFile}.json`),
+                const [data] = await Promise.all([
+                    loadQuizBookData(bookFile, difficulty),
                     minDelay
                 ]);
 
-                const data = module.default || module;
                 setBookData(data);
-                // We added bookName to the data in our conversion script
                 setBookName(data.bookName);
             } catch (error) {
                 console.error("Failed to load book data", error);
@@ -47,13 +48,15 @@ const Levels = () => {
             }
         };
         loadData();
-    }, [bookFile]);
+    }, [bookFile, difficulty]);
 
     if (loading) return <Loader />;
     if (!bookData) return <div className="error-text">Book data not found.</div>;
 
-    // Use progress from context
-    const bookProgress = progress[bookName] || {};
+    // Use difficulty-scoped progress from context
+    const bookProgress = getProgressForDifficulty
+        ? getProgressForDifficulty(difficulty, bookName)
+        : (progress[bookName] || {});
 
     const levels = [];
     const totalChapters = bookData.chapters;
@@ -91,7 +94,7 @@ const Levels = () => {
             <div className="container" style={{ justifyContent: 'flex-start' }}>
                 <header>
                     <div className="menu-icon" onClick={handleBack}>&#8592;</div>
-                    <h1 id="book-title">{bookNameMap[bookName] || bookName} Levels</h1>
+                    <h1 id="book-title">{bookNameMap[bookName] || bookName} Levels{diffLabel}</h1>
                 </header>
 
                 <div className="grid-container" id="levels-grid">
@@ -110,7 +113,7 @@ const Levels = () => {
                             }}
                             onClick={() => {
                                 if (lvl.unlocked) {
-                                    navigate(`/quiz/${bookFile}/${lvl.level}`);
+                                    navigate(`${basePath}/quiz/${bookFile}/${lvl.level}`);
                                 }
                             }}
                         >

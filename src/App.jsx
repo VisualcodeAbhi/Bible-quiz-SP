@@ -21,6 +21,7 @@ const Quiz = lazy(() => import('./pages/Quiz'));
 const Statistics = lazy(() => import('./pages/Statistics'));
 const Store = lazy(() => import('./pages/Store'));
 const Auth = lazy(() => import('./pages/Auth'));
+const AdminEditor = lazy(() => import('./pages/AdminEditor'));
 
 function AppContent() {
     const navigate = useNavigate();
@@ -281,22 +282,46 @@ function AppContent() {
 
     if (checkingSession) return <Loader />;
 
-    return (
-        <div className="app-container">
-            {updateData && <UpdateModal updateData={updateData} onClose={() => setUpdateData(null)} />}
+    const isAdminPage = location.pathname.startsWith('/admin') || location.pathname.startsWith('/editor');
+
+    if (isAdminPage) {
+        return (
             <Suspense fallback={<Loader />}>
                 <Routes>
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/" element={<Home />} />
-                    <Route path="/ot" element={<OldTestament />} />
-                    <Route path="/nt" element={<NewTestament />} />
-                    <Route path="/levels/:book" element={<Levels />} />
-                    <Route path="/quiz/:book/:level" element={<Quiz />} />
-                    <Route path="/statistics" element={<Statistics />} />
-                    <Route path="/store" element={<Store />} />
+                    <Route path="/admin-editor" element={<AdminEditor />} />
+                    <Route path="/editor" element={<AdminEditor />} />
+                    <Route path="/admin" element={<AdminEditor />} />
                 </Routes>
             </Suspense>
-        </div>
+        );
+    }
+
+    return (
+        <ScreenRestriction>
+            <StarryBackground />
+            <div className="app-container">
+                {updateData && <UpdateModal updateData={updateData} onClose={() => setUpdateData(null)} />}
+                <Suspense fallback={<Loader />}>
+                    <Routes>
+                        <Route path="/auth" element={<Auth />} />
+                        <Route path="/" element={<Home />} />
+                        <Route path="/ot" element={<OldTestament />} />
+                        <Route path="/nt" element={<NewTestament />} />
+                        <Route path="/levels/:book" element={<Levels />} />
+                        <Route path="/quiz/:book/:level" element={<Quiz />} />
+
+                        {/* Intermediate & Advanced Routes */}
+                        <Route path="/:difficulty/ot" element={<OldTestament />} />
+                        <Route path="/:difficulty/nt" element={<NewTestament />} />
+                        <Route path="/:difficulty/levels/:book" element={<Levels />} />
+                        <Route path="/:difficulty/quiz/:book/:level" element={<Quiz />} />
+
+                        <Route path="/statistics" element={<Statistics />} />
+                        <Route path="/store" element={<Store />} />
+                    </Routes>
+                </Suspense>
+            </div>
+        </ScreenRestriction>
     );
 }
 
@@ -309,12 +334,9 @@ function App() {
 
     return (
         <GameProvider>
-            <ScreenRestriction>
-                <StarryBackground />
-                <Router>
-                    <AppContent />
-                </Router>
-            </ScreenRestriction>
+            <Router>
+                <AppContent />
+            </Router>
         </GameProvider>
     );
 }

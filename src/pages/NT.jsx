@@ -33,10 +33,15 @@ const books = [
 ];
 
 import Loader from '../components/Loader';
+import { useParams } from 'react-router-dom';
 
 const NewTestament = () => {
+    const { difficulty } = useParams();
     const navigate = useNavigate();
     const [loading, setLoading] = React.useState(true);
+
+    const basePath = difficulty ? `/${difficulty}` : '';
+    const diffLabel = difficulty === 'intermediate' ? ' (Intermediate)' : difficulty === 'advanced' ? ' (Advanced)' : '';
 
     React.useEffect(() => {
         const timer = setTimeout(() => setLoading(false), 800);
@@ -50,12 +55,12 @@ const NewTestament = () => {
             <div className="container">
                 <header style={{ marginTop: "-10px" }}>
                     <div className="menu-icon" onClick={() => navigate(-1)}>&#8592;</div>
-                    <h1>New Testament</h1>
+                    <h1>New Testament{diffLabel}</h1>
                 </header>
                 <div style={{ width: '100%', textAlign: 'center', marginTop: '-20px' }}>
                     {books.map((book) => (
                         <Link
-                            to={`/levels/${book.file}`}
+                            to={`${basePath}/levels/${book.file}`}
                             state={{ from: 'list' }}
                             key={book.id}
                             className="book-link box"
@@ -70,3 +75,4 @@ const NewTestament = () => {
 };
 
 export default NewTestament;
+
