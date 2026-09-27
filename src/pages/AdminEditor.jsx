@@ -615,7 +615,7 @@ export default function AdminEditor() {
                                         transition: 'all 0.15s'
                                     }}
                                 >
-                                    {editingIndex !== null ? '💾 Update Question' : '➕ Add Question'}
+                                    {editingIndex !== null ? '💾' : '➕'}
                                 </button>
                                 {editingIndex !== null && (
                                     <button onClick={resetForm} style={styles.cancelEditBtn}>
