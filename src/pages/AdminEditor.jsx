@@ -54,6 +54,9 @@ export default function AdminEditor() {
         });
     }, [testamentFilter, bookSearch]);
 
+    // Cache key helper
+    const getCacheKey = (file, diff) => `admin_quiz_${diff}_${file}`;
+
     // Load Book Data
     const loadCurrentBook = useCallback(async () => {
         if (!activeBookMeta) return;
@@ -61,6 +64,9 @@ export default function AdminEditor() {
         setStatusMessage(null);
         setEditingIndex(null);
         resetForm();
+
+        const cacheKey = getCacheKey(activeBookMeta.file, difficulty);
+        const cachedStr = localStorage.getItem(cacheKey);
 
         try {
             // First attempt to fetch from Vite dev server API
@@ -80,7 +86,20 @@ export default function AdminEditor() {
                 }
             }
         } catch (e) {
-            console.log('Dev server API not reached, trying dynamic import fallback...', e);
+            console.log('Dev server API not reached, trying cache/dynamic import fallback...', e);
+        }
+
+        // Check localStorage cache before falling back
+        if (cachedStr) {
+            try {
+                const parsedCache = JSON.parse(cachedStr);
+                if (parsedCache && parsedCache.levels) {
+                    setFullBookData(parsedCache);
+                    setHasUnsavedChanges(false);
+                    setLoadingBook(false);
+                    return;
+                }
+            } catch (e) {}
         }
 
         // Fallback: load via client quizDataLoader
@@ -171,13 +190,19 @@ export default function AdminEditor() {
 
         updatedLevels[chapterKey] = existingList;
 
-        setFullBookData({
+        const updatedData = {
             ...(fullBookData || {}),
             bookName: activeBookMeta.name,
             chapters: activeBookMeta.chapters,
             difficulty: difficulty,
             levels: updatedLevels
-        });
+        };
+
+        setFullBookData(updatedData);
+
+        // Auto-save to localStorage cache
+        const cacheKey = getCacheKey(activeBookMeta.file, difficulty);
+        localStorage.setItem(cacheKey, JSON.stringify(updatedData));
 
         setHasUnsavedChanges(true);
         resetForm();
@@ -203,10 +228,16 @@ export default function AdminEditor() {
         existingList.splice(idx, 1);
         updatedLevels[chapterKey] = existingList;
 
-        setFullBookData({
+        const updatedData = {
             ...(fullBookData || {}),
             levels: updatedLevels
-        });
+        };
+
+        setFullBookData(updatedData);
+
+        const cacheKey = getCacheKey(activeBookMeta.file, difficulty);
+        localStorage.setItem(cacheKey, JSON.stringify(updatedData));
+
         setHasUnsavedChanges(true);
 
         if (editingIndex === idx) {
@@ -228,10 +259,16 @@ export default function AdminEditor() {
         list[targetIdx] = temp;
 
         updatedLevels[chapterKey] = list;
-        setFullBookData({
+        const updatedData = {
             ...(fullBookData || {}),
             levels: updatedLevels
-        });
+        };
+
+        setFullBookData(updatedData);
+
+        const cacheKey = getCacheKey(activeBookMeta.file, difficulty);
+        localStorage.setItem(cacheKey, JSON.stringify(updatedData));
+
         setHasUnsavedChanges(true);
     };
 
@@ -247,17 +284,29 @@ export default function AdminEditor() {
         list.splice(idx + 1, 0, cloned);
         updatedLevels[chapterKey] = list;
 
-        setFullBookData({
+        const updatedData = {
             ...(fullBookData || {}),
             levels: updatedLevels
-        });
+        };
+
+        setFullBookData(updatedData);
+
+        const cacheKey = getCacheKey(activeBookMeta.file, difficulty);
+        localStorage.setItem(cacheKey, JSON.stringify(updatedData));
+
         setHasUnsavedChanges(true);
     };
 
-    // Save to Project File on Disk (Calls Vite Backend)
+    const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+    // Save to Project File on Disk (Calls Vite Backend on Localhost or downloads on Vercel)
     const handleSaveToDisk = async () => {
         if (!fullBookData) return;
-        setStatusMessage({ type: 'loading', text: 'Saving file to project disk...' });
+        setStatusMessage({ type: 'loading', text: 'Saving...' });
+
+        // Always save to browser localStorage
+        const cacheKey = getCacheKey(activeBookMeta.file, difficulty);
+        localStorage.setItem(cacheKey, JSON.stringify(fullBookData));
 
         try {
             const res = await fetch('/api/admin/save-quiz-data', {
@@ -276,18 +325,19 @@ export default function AdminEditor() {
                     setHasUnsavedChanges(false);
                     setStatusMessage({
                         type: 'success',
-                        text: `✅ ${resJson.message}`
+                        text: `✅ Saved directly to disk: ${resJson.message}`
                     });
                     return;
                 }
             }
-            throw new Error('Dev server save endpoint returned non-ok status.');
+            throw new Error('Local API endpoint offline');
         } catch (err) {
-            console.error(err);
+            // Running on Vercel / remote: Trigger file download
             handleDownloadJson();
+            setHasUnsavedChanges(false);
             setStatusMessage({
                 type: 'warning',
-                text: 'Downloaded JSON file to your Downloads folder.'
+                text: `💾 Saved in browser memory & downloaded ${activeBookMeta.file}.json! (Since you are on Vercel cloud, open on http://localhost:5173/admin to auto-write directly to files).`
             });
         }
     };
