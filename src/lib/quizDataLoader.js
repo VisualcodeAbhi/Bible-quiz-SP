@@ -1,8 +1,11 @@
 /**
  * Unified Bible Quiz Data Loader
  * Supports difficulty levels: 'beginner', 'intermediate', 'advanced'
+ * @param {string} bookFile - The filename of the book (e.g. 'Gdata', 'Edata', 'Matthewdata')
+ * @param {string} difficulty - 'beginner' | 'intermediate' | 'advanced'
+ * @param {boolean} strict - If true, do NOT fallback to beginner data if file does not exist
  */
-export async function loadQuizBookData(bookFile, difficulty = 'beginner') {
+export async function loadQuizBookData(bookFile, difficulty = 'beginner', strict = false) {
     const normalizedDifficulty = (difficulty || 'beginner').toLowerCase();
 
     if (normalizedDifficulty === 'intermediate') {
@@ -10,7 +13,7 @@ export async function loadQuizBookData(bookFile, difficulty = 'beginner') {
             const module = await import(`../assets/data/intermediate/${bookFile}.json`);
             return module.default || module;
         } catch (e) {
-            // Fallback to base data if specific intermediate JSON does not exist yet
+            if (strict) return null;
             console.warn(`Intermediate data not found for ${bookFile}, falling back to base data.`);
         }
     } else if (normalizedDifficulty === 'advanced') {
@@ -18,12 +21,21 @@ export async function loadQuizBookData(bookFile, difficulty = 'beginner') {
             const module = await import(`../assets/data/advanced/${bookFile}.json`);
             return module.default || module;
         } catch (e) {
-            // Fallback to base data if specific advanced JSON does not exist yet
+            if (strict) return null;
             console.warn(`Advanced data not found for ${bookFile}, falling back to base data.`);
         }
     }
 
+    if (strict && normalizedDifficulty !== 'beginner') {
+        return null;
+    }
+
     // Default / Beginner
-    const module = await import(`../assets/data/${bookFile}.json`);
-    return module.default || module;
+    try {
+        const module = await import(`../assets/data/${bookFile}.json`);
+        return module.default || module;
+    } catch (e) {
+        console.error(`Base book data not found for ${bookFile}`, e);
+        return null;
+    }
 }

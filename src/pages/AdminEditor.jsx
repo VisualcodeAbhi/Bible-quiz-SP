@@ -131,11 +131,11 @@ export default function AdminEditor() {
             console.log('Dev server API not reached, trying cache/dynamic import fallback...', e);
         }
 
-        // Check localStorage cache before falling back
+        // Check localStorage cache before falling back (must match difficulty)
         if (cachedStr) {
             try {
                 const parsedCache = JSON.parse(cachedStr);
-                if (parsedCache && parsedCache.levels) {
+                if (parsedCache && parsedCache.levels && (!parsedCache.difficulty || parsedCache.difficulty === difficulty)) {
                     setFullBookData(parsedCache);
                     setHasUnsavedChanges(false);
                     setLoadingBook(false);
@@ -144,14 +144,15 @@ export default function AdminEditor() {
             } catch (e) {}
         }
 
-        // Fallback: load via client quizDataLoader
+        // Fallback: load via client quizDataLoader in STRICT mode
         try {
-            const clientData = await loadQuizBookData(activeBookMeta.file, difficulty);
-            if (clientData) {
+            const clientData = await loadQuizBookData(activeBookMeta.file, difficulty, true);
+            if (clientData && (difficulty === 'beginner' || clientData.difficulty === difficulty)) {
                 const cloned = JSON.parse(JSON.stringify(clientData));
                 if (!cloned.levels) cloned.levels = {};
                 setFullBookData(cloned);
             } else {
+                // Initialize clean empty book template for new Intermediate / Advanced book
                 setFullBookData({
                     bookName: activeBookMeta.name,
                     chapters: activeBookMeta.chapters,
@@ -337,6 +338,37 @@ export default function AdminEditor() {
         localStorage.setItem(cacheKey, JSON.stringify(updatedData));
 
         setHasUnsavedChanges(true);
+    };
+
+    // Copy Beginner Questions as Draft for Current Chapter
+    const handleCopyBeginnerChapter = async () => {
+        try {
+            const baseData = await loadQuizBookData(activeBookMeta.file, 'beginner');
+            const chapterKey = String(selectedChapter);
+            const baseQuestions = baseData?.levels?.[chapterKey];
+            if (!Array.isArray(baseQuestions) || baseQuestions.length === 0) {
+                setStatusMessage({ type: 'warning', text: `No beginner questions found for Chapter ${selectedChapter}` });
+                return;
+            }
+
+            const updatedLevels = { ...(fullBookData?.levels || {}) };
+            updatedLevels[chapterKey] = JSON.parse(JSON.stringify(baseQuestions));
+
+            const updatedData = {
+                ...(fullBookData || {}),
+                difficulty: difficulty,
+                levels: updatedLevels
+            };
+
+            setFullBookData(updatedData);
+            setHasUnsavedChanges(true);
+            setStatusMessage({
+                type: 'success',
+                text: `✅ Copied ${baseQuestions.length} beginner questions into Chapter ${selectedChapter} as draft!`
+            });
+        } catch (e) {
+            console.error('Failed to copy beginner questions', e);
+        }
     };
 
     const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
@@ -869,11 +901,34 @@ export default function AdminEditor() {
                         <div style={styles.emptyNotice}>
                             <div style={{ fontSize: '36px', marginBottom: '8px' }}>📝</div>
                             <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#E2E8F0' }}>
-                                No questions in Chapter {selectedChapter} yet
+                                No questions in Chapter {selectedChapter} yet ({difficulty})
                             </div>
                             <div style={{ fontSize: '13px', color: '#94A3B8', marginTop: '6px', maxWidth: '340px' }}>
                                 Use the middle form to add your first question or click <b>"Bulk Import"</b> to paste a list of questions!
                             </div>
+                            {difficulty !== 'beginner' && (
+                                <button
+                                    type="button"
+                                    onClick={handleCopyBeginnerChapter}
+                                    style={{
+                                        marginTop: '15px',
+                                        padding: '8px 16px',
+                                        background: 'rgba(99, 102, 241, 0.15)',
+                                        border: '1px solid #818CF8',
+                                        borderRadius: '8px',
+                                        color: '#A5B4FC',
+                                        fontSize: '12px',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}
+                                    title="Copy the beginner questions as a starting point to edit"
+                                >
+                                    📋 Copy Beginner Ch {selectedChapter} as Template
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div style={styles.questionsStream}>

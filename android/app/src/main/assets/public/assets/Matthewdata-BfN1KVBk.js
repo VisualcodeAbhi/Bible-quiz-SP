@@ -1,0 +1,1 @@
+const t="intermediate",s=28,e="Matthew",o={1:[{correct:0,question:"Test Question?",options:["A","B","C","D"]}]},a={difficulty:t,chapters:28,bookName:e,levels:o};export{e as bookName,s as chapters,a as default,t as difficulty,o as levels};
