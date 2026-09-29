@@ -279,6 +279,42 @@ export default function AdminEditor() {
         }
     };
 
+    // Clear all questions in the current chapter
+    const handleClearAllChapterQuestions = () => {
+        if (!currentChapterQuestions || currentChapterQuestions.length === 0) {
+            alert(`Chapter ${selectedChapter} has no questions to clear.`);
+            return;
+        }
+
+        const confirmMsg = `Are you sure you want to CLEAR ALL ${currentChapterQuestions.length} questions in Chapter ${selectedChapter} (${difficulty.toUpperCase()})?\n\nThis will empty all questions from this chapter. (Press Ctrl+S afterwards to save changes).`;
+        if (!window.confirm(confirmMsg)) return;
+
+        const chapterKey = String(selectedChapter);
+        const updatedLevels = { ...(fullBookData?.levels || {}) };
+        updatedLevels[chapterKey] = [];
+
+        const updatedData = {
+            ...(fullBookData || {}),
+            bookName: activeBookMeta.name,
+            chapters: activeBookMeta.chapters,
+            difficulty: difficulty,
+            levels: updatedLevels
+        };
+
+        setFullBookData(updatedData);
+
+        const cacheKey = getCacheKey(activeBookMeta.file, difficulty);
+        localStorage.setItem(cacheKey, JSON.stringify(updatedData));
+
+        setHasUnsavedChanges(true);
+        resetForm();
+
+        setStatusMessage({
+            type: 'warning',
+            text: `🗑️ Cleared all questions in Chapter ${selectedChapter} (${difficulty.toUpperCase()}). Press Ctrl+S to save changes!`
+        });
+    };
+
     // Move question up or down
     const handleMoveQuestion = (idx, direction) => {
         const targetIdx = idx + direction;
@@ -1137,7 +1173,19 @@ export default function AdminEditor() {
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <button
+                                onClick={handleClearAllChapterQuestions}
+                                disabled={currentChapterQuestions.length === 0}
+                                style={{
+                                    ...styles.quickClearBtn,
+                                    opacity: currentChapterQuestions.length === 0 ? 0.45 : 1,
+                                    cursor: currentChapterQuestions.length === 0 ? 'not-allowed' : 'pointer'
+                                }}
+                                title={`Clear all ${currentChapterQuestions.length} questions in Chapter ${selectedChapter}`}
+                            >
+                                🗑️ Clear All ({currentChapterQuestions.length})
+                            </button>
                             <button onClick={() => setShowBulkModal(true)} style={styles.quickBulkBtn} title="Bulk Import (Shortcut: B)">
                                 ⚡ Bulk Import <kbd style={styles.kbdBadge}>B</kbd>
                             </button>
@@ -1790,6 +1838,20 @@ const styles = {
         padding: '16px',
         gap: '14px',
         overflow: 'hidden'
+    },
+    quickClearBtn: {
+        padding: '6px 12px',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        border: '1px solid rgba(239, 68, 68, 0.4)',
+        borderRadius: '6px',
+        color: '#FCA5A5',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '4px',
+        transition: 'all 0.15s ease'
     },
     quickBulkBtn: {
         padding: '6px 12px',
