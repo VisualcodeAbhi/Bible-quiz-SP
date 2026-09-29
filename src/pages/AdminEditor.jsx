@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BIBLE_BOOKS } from '../bibleBooksData';
 import { loadQuizBookData } from '../lib/quizDataLoader';
@@ -36,6 +36,16 @@ export default function AdminEditor() {
     const [showBulkModal, setShowBulkModal] = useState(false);
     const [bulkJsonInput, setBulkJsonInput] = useState('');
     const [bulkError, setBulkError] = useState('');
+    const bulkTextareaRef = useRef(null);
+
+    // Auto-focus textarea when bulk modal opens
+    useEffect(() => {
+        if (showBulkModal) {
+            setTimeout(() => {
+                bulkTextareaRef.current?.focus();
+            }, 60);
+        }
+    }, [showBulkModal]);
 
     // Selected book metadata
     const activeBookMeta = useMemo(() => {
@@ -498,18 +508,71 @@ export default function AdminEditor() {
         }
     };
 
-    // Keyboard shortcut for saving (Ctrl+S / Cmd+S)
+    // Keyboard shortcuts:
+    // - Ctrl+S / Cmd+S: Save to Supabase Cloud & Disk
+    // - 'b' / 'B' / Alt+B / Ctrl+B: Open Bulk Import Modal
+    // - In Bulk Modal:
+    //   - 'i' / 'I' / Ctrl+I / Alt+I / Ctrl+Enter / Cmd+Enter: Execute Bulk Import
+    //   - Escape: Close Bulk Import Modal
     useEffect(() => {
         const handleKeyDown = (e) => {
+            const isInputActive = ['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName);
+
+            // 1. Save shortcut: Ctrl+S / Cmd+S
             if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
                 e.preventDefault();
                 e.stopPropagation();
                 handleSaveToDisk();
+                return;
+            }
+
+            // 2. When Bulk Import Modal is OPEN
+            if (showBulkModal) {
+                // Escape key to cancel/close
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowBulkModal(false);
+                    return;
+                }
+
+                // Import shortcut:
+                // - Ctrl+I / Cmd+I
+                // - Alt+I
+                // - Ctrl+Enter / Cmd+Enter
+                // - 'i' / 'I' when textarea is not actively being edited or focused
+                const isCtrlI = (e.ctrlKey || e.metaKey) && (e.key === 'i' || e.key === 'I');
+                const isAltI = e.altKey && (e.key === 'i' || e.key === 'I');
+                const isCtrlEnter = (e.ctrlKey || e.metaKey) && e.key === 'Enter';
+                const isPlainI = !isInputActive && (e.key === 'i' || e.key === 'I');
+
+                if (isCtrlI || isAltI || isCtrlEnter || isPlainI) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleBulkImport();
+                    return;
+                }
+            }
+
+            // 3. When Bulk Import Modal is CLOSED
+            if (!showBulkModal) {
+                // 'b' / 'B' (when not inside an input) or Alt+B / Ctrl+B
+                const isPlainB = !isInputActive && (e.key === 'b' || e.key === 'B');
+                const isAltB = e.altKey && (e.key === 'b' || e.key === 'B');
+                const isCtrlB = (e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B');
+
+                if (isPlainB || isAltB || isCtrlB) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setShowBulkModal(true);
+                    return;
+                }
             }
         };
+
         window.addEventListener('keydown', handleKeyDown, { capture: true });
         return () => window.removeEventListener('keydown', handleKeyDown, { capture: true });
-    }, [fullBookData, activeBookMeta, difficulty]);
+    }, [fullBookData, activeBookMeta, difficulty, showBulkModal, bulkJsonInput, selectedChapter]);
 
     return (
         <div style={styles.webPageContainer}>
@@ -575,9 +638,9 @@ export default function AdminEditor() {
                     <button
                         onClick={() => setShowBulkModal(true)}
                         style={{ ...styles.actionBtn, ...styles.bulkBtn }}
-                        title="Paste bulk questions"
+                        title="Paste bulk questions (Shortcut: B)"
                     >
-                        ⚡ Bulk Import
+                        ⚡ Bulk Import <kbd style={styles.kbdBadge}>B</kbd>
                     </button>
                 </div>
             </header>
@@ -860,8 +923,8 @@ export default function AdminEditor() {
                         </div>
 
                         <div style={{ display: 'flex', gap: '8px' }}>
-                            <button onClick={() => setShowBulkModal(true)} style={styles.quickBulkBtn}>
-                                ⚡ Bulk Import
+                            <button onClick={() => setShowBulkModal(true)} style={styles.quickBulkBtn} title="Bulk Import (Shortcut: B)">
+                                ⚡ Bulk Import <kbd style={styles.kbdBadge}>B</kbd>
                             </button>
                         </div>
                     </div>
@@ -996,14 +1059,20 @@ export default function AdminEditor() {
                             <h3 style={{ margin: 0, fontSize: '18px', color: '#FFFFFF' }}>
                                 ⚡ Bulk Import Questions into {activeBookMeta.name} (Chapter {selectedChapter})
                             </h3>
-                            <button onClick={() => setShowBulkModal(false)} style={styles.modalCloseBtn}>✕</button>
+                            <button onClick={() => setShowBulkModal(false)} style={styles.modalCloseBtn} title="Close (Esc)">✕</button>
                         </div>
 
-                        <p style={{ fontSize: '13px', color: '#94A3B8', margin: '12px 0 6px 0' }}>
-                            Paste a JSON array of question objects. Example format:
-                        </p>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 6px 0' }}>
+                            <p style={{ fontSize: '13px', color: '#94A3B8', margin: 0 }}>
+                                Paste a JSON array of question objects:
+                            </p>
+                            <span style={{ fontSize: '12px', color: '#A5B4FC' }}>
+                                Shortcuts: <kbd style={styles.kbdBadge}>Ctrl+I</kbd> or <kbd style={styles.kbdBadge}>Ctrl+Enter</kbd> to Import • <kbd style={styles.kbdBadge}>Esc</kbd> to Cancel
+                            </span>
+                        </div>
 
                         <textarea
+                            ref={bulkTextareaRef}
                             rows={11}
                             placeholder={`[\n  {\n    "question": "దేవుడు వెలుగునకు ఏమని పేరు పెట్టెను?",\n    "options": ["రాత్రి", "పగలు", "ఆకాశము", "భూమి"],\n    "correct": 1\n  }\n]`}
                             value={bulkJsonInput}
@@ -1016,11 +1085,11 @@ export default function AdminEditor() {
                         )}
 
                         <div style={styles.modalActions}>
-                            <button onClick={handleBulkImport} style={styles.modalImportConfirmBtn}>
-                                Import into Chapter {selectedChapter}
+                            <button onClick={handleBulkImport} style={styles.modalImportConfirmBtn} title="Import (Shortcut: Ctrl+I / I / Ctrl+Enter)">
+                                Import into Chapter {selectedChapter} <kbd style={{ ...styles.kbdBadge, backgroundColor: 'rgba(255,255,255,0.25)', marginLeft: '8px' }}>Ctrl+I / I</kbd>
                             </button>
-                            <button onClick={() => setShowBulkModal(false)} style={styles.modalCancelBtn}>
-                                Cancel
+                            <button onClick={() => setShowBulkModal(false)} style={styles.modalCancelBtn} title="Cancel (Esc)">
+                                Cancel <kbd style={{ ...styles.kbdBadge, marginLeft: '6px' }}>Esc</kbd>
                             </button>
                         </div>
                     </div>
@@ -1622,5 +1691,16 @@ const styles = {
         borderRadius: '8px',
         fontWeight: 'bold',
         cursor: 'pointer'
+    },
+    kbdBadge: {
+        fontSize: '11px',
+        fontWeight: 'bold',
+        padding: '2px 6px',
+        borderRadius: '4px',
+        backgroundColor: 'rgba(0, 0, 0, 0.35)',
+        border: '1px solid rgba(255, 255, 255, 0.25)',
+        color: '#FFFFFF',
+        fontFamily: 'monospace',
+        display: 'inline-block'
     }
 };
