@@ -36,6 +36,8 @@ export default function AdminEditor() {
     const [showBulkModal, setShowBulkModal] = useState(false);
     const [bulkJsonInput, setBulkJsonInput] = useState('');
     const [bulkError, setBulkError] = useState('');
+    const [distribute15, setDistribute15] = useState(false);
+    const [bulkTemplateTab, setBulkTemplateTab] = useState('single'); // 'single' | 'all3'
     const bulkTextareaRef = useRef(null);
 
     // Auto-focus textarea when bulk modal opens
@@ -466,43 +468,256 @@ export default function AdminEditor() {
         }
     };
 
-    // Bulk Import Questions
-    const handleBulkImport = () => {
-        setBulkError('');
-        try {
-            const parsed = JSON.parse(bulkJsonInput);
-            if (!Array.isArray(parsed)) {
-                setBulkError('Input must be a JSON array of question objects [ { question: "...", options: [...], correct: 0 } ]');
-                return;
-            }
+    // Helper to load and save a specific difficulty's chapter questions
+    const saveDifficultyChapterQuestions = async (diff, newQuestionsList) => {
+        if (!newQuestionsList || newQuestionsList.length === 0) return null;
+        const docId = `${diff}_${activeBookMeta.file}`;
+        const cacheKey = getCacheKey(activeBookMeta.file, diff);
+        let bookData = null;
 
-            for (let i = 0; i < parsed.length; i++) {
-                const item = parsed[i];
-                if (!item.question || !Array.isArray(item.options) || item.options.length !== 4) {
-                    setBulkError(`Item at index ${i} is invalid. Each item must have "question", "options" (4 items), and "correct" (0-3).`);
-                    return;
+        if (diff === difficulty && fullBookData) {
+            bookData = JSON.parse(JSON.stringify(fullBookData));
+        } else {
+            // 1. Try Supabase Cloud
+            try {
+                const { data: row } = await supabase.from('quiz_books').select('data').eq('id', docId).maybeSingle();
+                if (row?.data?.levels) {
+                    bookData = row.data;
+                }
+            } catch (e) {}
+
+            // 2. Try LocalStorage
+            if (!bookData) {
+                const cached = localStorage.getItem(cacheKey);
+                if (cached) {
+                    try { bookData = JSON.parse(cached); } catch (e) {}
                 }
             }
 
-            const chapterKey = String(selectedChapter);
-            const updatedLevels = { ...(fullBookData?.levels || {}) };
-            const existingList = Array.isArray(updatedLevels[chapterKey]) ? [...updatedLevels[chapterKey]] : [];
+            // 3. Try client loader
+            if (!bookData) {
+                try {
+                    const clientData = await loadQuizBookData(activeBookMeta.file, diff, true);
+                    if (clientData?.levels) bookData = clientData;
+                } catch (e) {}
+            }
 
-            const merged = [...existingList, ...parsed];
-            updatedLevels[chapterKey] = merged;
+            // 4. Default empty template
+            if (!bookData) {
+                bookData = {
+                    bookName: activeBookMeta.name,
+                    chapters: activeBookMeta.chapters,
+                    difficulty: diff,
+                    levels: {}
+                };
+            }
+        }
 
-            setFullBookData({
-                ...(fullBookData || {}),
-                bookName: activeBookMeta.name,
-                chapters: activeBookMeta.chapters,
-                difficulty: difficulty,
-                levels: updatedLevels
+        const chapterKey = String(selectedChapter);
+        const existingList = Array.isArray(bookData.levels?.[chapterKey]) ? [...bookData.levels[chapterKey]] : [];
+        const updatedLevels = { ...(bookData.levels || {}), [chapterKey]: [...existingList, ...newQuestionsList] };
+        bookData.levels = updatedLevels;
+        bookData.difficulty = diff;
+
+        // Save to Supabase Cloud
+        try {
+            await supabase.from('quiz_books').upsert({
+                id: docId,
+                book_file: activeBookMeta.file,
+                difficulty: diff,
+                data: bookData,
+                updated_at: new Date().toISOString()
             });
+        } catch (e) {}
 
-            setHasUnsavedChanges(true);
-            setShowBulkModal(false);
-            setBulkJsonInput('');
-            alert(`Successfully added ${parsed.length} questions to Chapter ${selectedChapter}!`);
+        // Save to LocalStorage
+        localStorage.setItem(cacheKey, JSON.stringify(bookData));
+
+        // Save to Disk API if localhost
+        try {
+            await fetch('/api/admin/save-quiz-data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ bookFile: activeBookMeta.file, difficulty: diff, data: bookData })
+            });
+        } catch (e) {}
+
+        return bookData;
+    };
+
+    // Bulk Import Questions (Single Level or Multi-Level 15 All-at-Once)
+    const handleBulkImport = async () => {
+        setBulkError('');
+        try {
+            const parsed = JSON.parse(bulkJsonInput);
+            const chapterKey = String(selectedChapter);
+
+            // CASE 1: Object with difficulty keys { "beginner": [...], "intermediate": [...], "advanced": [...] }
+            if (typeof parsed === 'object' && !Array.isArray(parsed)) {
+                const beginnerList = parsed.beginner || parsed.basic || parsed.easy || [];
+                const intermediateList = parsed.intermediate || parsed.medium || [];
+                const advancedList = parsed.advanced || parsed.hard || [];
+
+                const allItems = [...beginnerList, ...intermediateList, ...advancedList];
+                if (allItems.length === 0) {
+                    setBulkError('No question arrays found for beginner, intermediate, or advanced.');
+                    return;
+                }
+
+                // Validate each item
+                for (let i = 0; i < allItems.length; i++) {
+                    const item = allItems[i];
+                    if (!item.question || !Array.isArray(item.options) || item.options.length !== 4) {
+                        setBulkError(`Invalid question item at index ${i}. Each question must have "question", 4 "options", and "correct" (0-3).`);
+                        return;
+                    }
+                }
+
+                let activeUpdatedData = null;
+                const counts = [];
+
+                if (beginnerList.length > 0) {
+                    const res = await saveDifficultyChapterQuestions('beginner', beginnerList);
+                    if (difficulty === 'beginner') activeUpdatedData = res;
+                    counts.push(`${beginnerList.length} Beginner`);
+                }
+                if (intermediateList.length > 0) {
+                    const res = await saveDifficultyChapterQuestions('intermediate', intermediateList);
+                    if (difficulty === 'intermediate') activeUpdatedData = res;
+                    counts.push(`${intermediateList.length} Intermediate`);
+                }
+                if (advancedList.length > 0) {
+                    const res = await saveDifficultyChapterQuestions('advanced', advancedList);
+                    if (difficulty === 'advanced') activeUpdatedData = res;
+                    counts.push(`${advancedList.length} Advanced`);
+                }
+
+                if (activeUpdatedData) {
+                    setFullBookData(activeUpdatedData);
+                }
+
+                setHasUnsavedChanges(false);
+                setShowBulkModal(false);
+                setBulkJsonInput('');
+                setStatusMessage({
+                    type: 'success',
+                    text: `✅ Multi-Level Import: Added ${counts.join(', ')} to ${activeBookMeta.name} Chapter ${selectedChapter}!`
+                });
+                alert(`✅ Successfully imported:\n${counts.join('\n')}\ninto Chapter ${selectedChapter}!`);
+                return;
+            }
+
+            // CASE 2: Array of Questions
+            if (Array.isArray(parsed)) {
+                if (parsed.length === 0) {
+                    setBulkError('Array cannot be empty.');
+                    return;
+                }
+
+                for (let i = 0; i < parsed.length; i++) {
+                    const item = parsed[i];
+                    if (!item.question || !Array.isArray(item.options) || item.options.length !== 4) {
+                        setBulkError(`Item at index ${i} is invalid. Each item must have "question", 4 "options", and "correct" (0-3).`);
+                        return;
+                    }
+                }
+
+                // Check if items have explicit difficulty property
+                const hasExplicitDiff = parsed.some(item => item.difficulty);
+                if (hasExplicitDiff) {
+                    const beginnerList = parsed.filter(item => {
+                        const d = String(item.difficulty || '').toLowerCase();
+                        return d === 'beginner' || d === 'basic' || d === 'easy';
+                    });
+                    const intermediateList = parsed.filter(item => {
+                        const d = String(item.difficulty || '').toLowerCase();
+                        return d === 'intermediate' || d === 'medium';
+                    });
+                    const advancedList = parsed.filter(item => {
+                        const d = String(item.difficulty || '').toLowerCase();
+                        return d === 'advanced' || d === 'hard';
+                    });
+
+                    let activeUpdatedData = null;
+                    const counts = [];
+                    if (beginnerList.length > 0) {
+                        const res = await saveDifficultyChapterQuestions('beginner', beginnerList);
+                        if (difficulty === 'beginner') activeUpdatedData = res;
+                        counts.push(`${beginnerList.length} Beginner`);
+                    }
+                    if (intermediateList.length > 0) {
+                        const res = await saveDifficultyChapterQuestions('intermediate', intermediateList);
+                        if (difficulty === 'intermediate') activeUpdatedData = res;
+                        counts.push(`${intermediateList.length} Intermediate`);
+                    }
+                    if (advancedList.length > 0) {
+                        const res = await saveDifficultyChapterQuestions('advanced', advancedList);
+                        if (difficulty === 'advanced') activeUpdatedData = res;
+                        counts.push(`${advancedList.length} Advanced`);
+                    }
+
+                    if (activeUpdatedData) setFullBookData(activeUpdatedData);
+                    setHasUnsavedChanges(false);
+                    setShowBulkModal(false);
+                    setBulkJsonInput('');
+                    setStatusMessage({
+                        type: 'success',
+                        text: `✅ Multi-Level Import: Added ${counts.join(', ')} to ${activeBookMeta.name} Chapter ${selectedChapter}!`
+                    });
+                    alert(`✅ Successfully imported:\n${counts.join('\n')}\ninto Chapter ${selectedChapter}!`);
+                    return;
+                }
+
+                // Check if user checked "Distribute into Beginner, Intermediate, Advanced"
+                if (distribute15 && parsed.length >= 3) {
+                    const chunk = Math.floor(parsed.length / 3);
+                    const beginnerList = parsed.slice(0, chunk);
+                    const intermediateList = parsed.slice(chunk, chunk * 2);
+                    const advancedList = parsed.slice(chunk * 2);
+
+                    let activeUpdatedData = null;
+                    const bRes = await saveDifficultyChapterQuestions('beginner', beginnerList);
+                    if (difficulty === 'beginner') activeUpdatedData = bRes;
+
+                    const iRes = await saveDifficultyChapterQuestions('intermediate', intermediateList);
+                    if (difficulty === 'intermediate') activeUpdatedData = iRes;
+
+                    const aRes = await saveDifficultyChapterQuestions('advanced', advancedList);
+                    if (difficulty === 'advanced') activeUpdatedData = aRes;
+
+                    if (activeUpdatedData) setFullBookData(activeUpdatedData);
+                    setHasUnsavedChanges(false);
+                    setShowBulkModal(false);
+                    setBulkJsonInput('');
+                    setStatusMessage({
+                        type: 'success',
+                        text: `✅ Split & Imported: ${beginnerList.length} Beginner, ${intermediateList.length} Intermediate, ${advancedList.length} Advanced into Chapter ${selectedChapter}!`
+                    });
+                    alert(`✅ Successfully split & imported:\n- ${beginnerList.length} Beginner\n- ${intermediateList.length} Intermediate\n- ${advancedList.length} Advanced\ninto Chapter ${selectedChapter}!`);
+                    return;
+                }
+
+                // Standard Single Level Import into current difficulty
+                const updatedLevels = { ...(fullBookData?.levels || {}) };
+                const existingList = Array.isArray(updatedLevels[chapterKey]) ? [...updatedLevels[chapterKey]] : [];
+                const merged = [...existingList, ...parsed];
+                updatedLevels[chapterKey] = merged;
+
+                const updatedData = {
+                    ...(fullBookData || {}),
+                    bookName: activeBookMeta.name,
+                    chapters: activeBookMeta.chapters,
+                    difficulty: difficulty,
+                    levels: updatedLevels
+                };
+
+                setFullBookData(updatedData);
+                localStorage.setItem(getCacheKey(activeBookMeta.file, difficulty), JSON.stringify(updatedData));
+                setHasUnsavedChanges(true);
+                setShowBulkModal(false);
+                setBulkJsonInput('');
+                alert(`Successfully added ${parsed.length} questions to Chapter ${selectedChapter} (${difficulty.toUpperCase()})!`);
+            }
         } catch (e) {
             setBulkError(`Invalid JSON format: ${e.message}`);
         }
@@ -1054,31 +1269,84 @@ export default function AdminEditor() {
             {/* Bulk Import Modal */}
             {showBulkModal && (
                 <div style={styles.modalOverlay}>
-                    <div style={styles.modalContent}>
+                    <div style={{ ...styles.modalContent, maxWidth: '780px' }}>
                         <div style={styles.modalHeader}>
                             <h3 style={{ margin: 0, fontSize: '18px', color: '#FFFFFF' }}>
-                                ⚡ Bulk Import Questions into {activeBookMeta.name} (Chapter {selectedChapter})
+                                ⚡ Bulk Import Questions — {activeBookMeta.name} (Chapter {selectedChapter})
                             </h3>
                             <button onClick={() => setShowBulkModal(false)} style={styles.modalCloseBtn} title="Close (Esc)">✕</button>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '12px 0 6px 0' }}>
+                        {/* Template Format Selector */}
+                        <div style={{ display: 'flex', gap: '8px', margin: '14px 0 10px 0' }}>
+                            <button
+                                type="button"
+                                onClick={() => setBulkTemplateTab('single')}
+                                style={{
+                                    padding: '6px 14px',
+                                    borderRadius: '6px',
+                                    fontSize: '12px',
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer',
+                                    border: '1px solid',
+                                    borderColor: bulkTemplateTab === 'single' ? '#8B5CF6' : 'rgba(255,255,255,0.15)',
+                                    backgroundColor: bulkTemplateTab === 'single' ? '#8B5CF625' : 'transparent',
+                                    color: bulkTemplateTab === 'single' ? '#C4B5FD' : '#94A3B8'
+                                }}
+                            >
+                                📄 Format 1: Standard Array ({difficulty.toUpperCase()})
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setBulkTemplateTab('all3')}
+                                style={{
+                                    padding: '6px 14px',
+                                    borderRadius: '6px',
+                                    fontSize: '12px',
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer',
+                                    border: '1px solid',
+                                    borderColor: bulkTemplateTab === 'all3' ? '#10B981' : 'rgba(255,255,255,0.15)',
+                                    backgroundColor: bulkTemplateTab === 'all3' ? '#10B98125' : 'transparent',
+                                    color: bulkTemplateTab === 'all3' ? '#6EE7B7' : '#94A3B8'
+                                }}
+                            >
+                                🌟 Format 2: All 3 Levels at Once (15 Questions: 5 Basic + 5 Inter + 5 Adv)
+                            </button>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '6px 0' }}>
                             <p style={{ fontSize: '13px', color: '#94A3B8', margin: 0 }}>
-                                Paste a JSON array of question objects:
+                                {bulkTemplateTab === 'all3'
+                                    ? 'Paste JSON object with "beginner", "intermediate", and "advanced" arrays:'
+                                    : `Paste JSON array of questions to add to ${difficulty.toUpperCase()}:`}
                             </p>
                             <span style={{ fontSize: '12px', color: '#A5B4FC' }}>
-                                Shortcuts: <kbd style={styles.kbdBadge}>Ctrl+I</kbd> or <kbd style={styles.kbdBadge}>Ctrl+Enter</kbd> to Import • <kbd style={styles.kbdBadge}>Esc</kbd> to Cancel
+                                <kbd style={styles.kbdBadge}>Ctrl+I</kbd> / <kbd style={styles.kbdBadge}>Ctrl+Enter</kbd> to Import • <kbd style={styles.kbdBadge}>Esc</kbd> to Cancel
                             </span>
                         </div>
 
                         <textarea
                             ref={bulkTextareaRef}
                             rows={11}
-                            placeholder={`[\n  {\n    "question": "దేవుడు వెలుగునకు ఏమని పేరు పెట్టెను?",\n    "options": ["రాత్రి", "పగలు", "ఆకాశము", "భూమి"],\n    "correct": 1\n  }\n]`}
+                            placeholder={bulkTemplateTab === 'all3' ? `{\n  "beginner": [\n    { "question": "Beginner Q1...", "options": ["A", "B", "C", "D"], "correct": 0 },\n    { "question": "Beginner Q2...", "options": ["A", "B", "C", "D"], "correct": 1 }\n  ],\n  "intermediate": [\n    { "question": "Intermediate Q1...", "options": ["A", "B", "C", "D"], "correct": 2 }\n  ],\n  "advanced": [\n    { "question": "Advanced Q1...", "options": ["A", "B", "C", "D"], "correct": 3 }\n  ]\n}` : `[\n  {\n    "question": "దేవుడు వెలుగునకు ఏమని పేరు పెట్టెను?",\n    "options": ["రాత్రి", "పగలు", "ఆకాశము", "భూమి"],\n    "correct": 1\n  }\n]`}
                             value={bulkJsonInput}
                             onChange={e => setBulkJsonInput(e.target.value)}
                             style={styles.modalTextarea}
                         />
+
+                        {/* Split 15 checkbox for flat arrays */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#E2E8F0' }}>
+                                <input
+                                    type="checkbox"
+                                    checked={distribute15}
+                                    onChange={e => setDistribute15(e.target.checked)}
+                                    style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                                />
+                                <span>Distribute array evenly across <b>Beginner, Intermediate & Advanced</b> (e.g. 5 each for 15 questions)</span>
+                            </label>
+                        </div>
 
                         {bulkError && (
                             <div style={styles.modalError}>⚠️ {bulkError}</div>
