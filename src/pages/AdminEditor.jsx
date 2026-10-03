@@ -762,6 +762,7 @@ export default function AdminEditor() {
     // Keyboard shortcuts:
     // - Ctrl+S / Cmd+S: Save to Supabase Cloud & Disk
     // - 'b' / 'B' / Alt+B / Ctrl+B: Open Bulk Import Modal
+    // - 'c' / 'C': Clear All questions in the current chapter
     // - In Bulk Modal:
     //   - 'i' / 'I' / Ctrl+I / Alt+I / Ctrl+Enter / Cmd+Enter: Execute Bulk Import
     //   - Escape: Close Bulk Import Modal
@@ -816,6 +817,15 @@ export default function AdminEditor() {
                     e.preventDefault();
                     e.stopPropagation();
                     setShowBulkModal(true);
+                    return;
+                }
+
+                // 'c' / 'C' (when not inside an input) -> Clear all questions in chapter
+                const isPlainC = !isInputActive && (e.key === 'c' || e.key === 'C');
+                if (isPlainC) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleClearAllChapterQuestions();
                     return;
                 }
             }
@@ -1182,9 +1192,9 @@ export default function AdminEditor() {
                                     opacity: currentChapterQuestions.length === 0 ? 0.45 : 1,
                                     cursor: currentChapterQuestions.length === 0 ? 'not-allowed' : 'pointer'
                                 }}
-                                title={`Clear all ${currentChapterQuestions.length} questions in Chapter ${selectedChapter}`}
+                                title={`Clear all ${currentChapterQuestions.length} questions in Chapter ${selectedChapter} (Shortcut: C)`}
                             >
-                                🗑️ Clear All ({currentChapterQuestions.length})
+                                🗑️ Clear All ({currentChapterQuestions.length}) <kbd style={styles.kbdBadge}>C</kbd>
                             </button>
                             <button onClick={() => setShowBulkModal(true)} style={styles.quickBulkBtn} title="Bulk Import (Shortcut: B)">
                                 ⚡ Bulk Import <kbd style={styles.kbdBadge}>B</kbd>
