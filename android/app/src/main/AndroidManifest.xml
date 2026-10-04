@@ -7,10 +7,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <!-- AdMob App ID (REAL ID) -->
+        <!-- AdMob App ID (REAL ID - Linked to Google Play) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-5979451943443465~1411737632"
+            android:value="ca-app-pub-5979451943443465~5874042074"
         />
 
         <activity
