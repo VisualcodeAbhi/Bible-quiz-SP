@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import ConfirmModal from '../components/ConfirmModal';
 import { compressAvatar } from '../lib/imageCompressor';
+import { soundService } from '../services/soundService';
 
 const GameContext = createContext();
 
@@ -20,6 +21,93 @@ export const GameProvider = ({ children }) => {
     const [hints, setHints] = useState(5); // Default 5 hints
     const [infiniteLivesUntil, setInfiniteLivesUntil] = useState(null); // Timestamp
     const [progress, setProgress] = useState({}); // { BookName: { 1: { completed: true } } }
+
+    // Sound & Haptics state
+    const [soundEnabled, setSoundEnabled] = useState(() => soundService.isSoundEnabled());
+    const [vibrateEnabled, setVibrateEnabled] = useState(() => soundService.isVibrateEnabled());
+
+    const toggleSound = () => {
+        const newState = soundService.toggleSound();
+        setSoundEnabled(newState);
+        return newState;
+    };
+
+    const toggleVibrate = () => {
+        const newState = soundService.toggleVibrate();
+        setVibrateEnabled(newState);
+        return newState;
+    };
+
+    // Bookmarks / Saved Tricky Questions
+    const [bookmarks, setBookmarks] = useState(() => {
+        try {
+            const saved = localStorage.getItem('bibleQuiz_bookmarks');
+            return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            return [];
+        }
+    });
+
+    const isBookmarked = (questionText) => {
+        return bookmarks.some(b => b.question === questionText);
+    };
+
+    const toggleBookmark = (questionItem) => {
+        setBookmarks(prev => {
+            const exists = prev.some(b => b.question === questionItem.question);
+            let updated;
+            if (exists) {
+                updated = prev.filter(b => b.question !== questionItem.question);
+            } else {
+                updated = [
+                    {
+                        ...questionItem,
+                        savedAt: Date.now()
+                    },
+                    ...prev
+                ];
+            }
+            localStorage.setItem('bibleQuiz_bookmarks', JSON.stringify(updated));
+            return updated;
+        });
+    };
+
+    // Daily Streak state
+    const [streak, setStreak] = useState(() => {
+        try {
+            const count = parseInt(localStorage.getItem('bibleQuiz_streak') || '0', 10);
+            return isNaN(count) ? 0 : count;
+        } catch (e) {
+            return 0;
+        }
+    });
+
+    const recordDailyPlay = () => {
+        try {
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const lastPlay = localStorage.getItem('bibleQuiz_lastPlayDate');
+
+            if (lastPlay === todayStr) {
+                return streak;
+            }
+
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+            let newStreak = 1;
+            if (lastPlay === yesterdayStr) {
+                newStreak = (streak || 0) + 1;
+            }
+
+            setStreak(newStreak);
+            localStorage.setItem('bibleQuiz_streak', newStreak.toString());
+            localStorage.setItem('bibleQuiz_lastPlayDate', todayStr);
+            return newStreak;
+        } catch (e) {
+            return streak;
+        }
+    };
 
     // UI State
     const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -51,6 +139,11 @@ export const GameProvider = ({ children }) => {
         localStorage.removeItem('bibleQuiz_hints');
         localStorage.removeItem('bibleQuiz_infiniteLivesUntil');
         localStorage.removeItem('bibleQuizProgress');
+        localStorage.removeItem('bibleQuiz_bookmarks');
+        localStorage.removeItem('bibleQuiz_streak');
+        localStorage.removeItem('bibleQuiz_lastPlayDate');
+        setBookmarks([]);
+        setStreak(0);
     };
 
     // --- Loading & Initial Sync ---
@@ -378,7 +471,7 @@ export const GameProvider = ({ children }) => {
         let updatedPhoto = userPhoto;
 
         if (name && name.trim()) {
-            updatedName = name.trim();
+            updatedName = name.trim().slice(0, 13);
             setUserName(updatedName);
             localStorage.setItem('bibleQuiz_userName', updatedName);
         }
@@ -532,7 +625,16 @@ export const GameProvider = ({ children }) => {
         resetProgress,
         totallyResetGame, // EXPOCED
         session,
-        isLoggedIn: !!session
+        isLoggedIn: !!session,
+        soundEnabled,
+        toggleSound,
+        vibrateEnabled,
+        toggleVibrate,
+        bookmarks,
+        toggleBookmark,
+        isBookmarked,
+        streak,
+        recordDailyPlay
     };
 
     return (

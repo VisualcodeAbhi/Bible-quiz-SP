@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { supabase } from '../lib/supabaseClient';
 import UserAvatar from '../components/UserAvatar';
@@ -15,9 +15,10 @@ import {
 
 const Statistics = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { progress, userName, userPhoto, session } = useGame();
 
-    const [activeTab, setActiveTab] = useState('myStats'); // 'myStats' | 'leaderboard'
+    const [activeTab, setActiveTab] = useState(location.state?.tab || 'myStats'); // 'myStats' | 'leaderboard'
     const [bookFilter, setBookFilter] = useState('all'); // 'all' | 'completed' | 'inProgress' | 'notStarted'
     const [searchQuery, setSearchQuery] = useState('');
 

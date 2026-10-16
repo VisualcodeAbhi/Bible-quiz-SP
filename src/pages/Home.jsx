@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import ConfirmModal from '../components/ConfirmModal';
 import UserAvatar from '../components/UserAvatar';
 import { compressAvatar } from '../lib/imageCompressor';
+import { bookNameMap } from '../bookNames';
+import { soundService } from '../services/soundService';
 
 import { App } from '@capacitor/app';
 import { Toast } from '@capacitor/toast';
@@ -15,20 +17,40 @@ import appSettings from '../assets/data/appSettings.json';
 
 const Home = () => {
     const navigate = useNavigate();
-    const { lives, maxLives, nextRestoreTime, userName, userPhoto, updateProfile, nameLocked, infiniteLivesUntil, isLoggedIn, resetProgress, totallyResetGame, session } = useGame();
-    // ...
-    // ... inside modal render ... (context will match TargetContent)
-
-
-    // Splash logic removed (handled by App.jsx)
+    const { 
+        lives, 
+        maxLives, 
+        nextRestoreTime, 
+        userName, 
+        userPhoto, 
+        updateProfile, 
+        nameLocked, 
+        infiniteLivesUntil, 
+        isLoggedIn, 
+        resetProgress, 
+        totallyResetGame, 
+        session,
+        streak,
+        bookmarks,
+        toggleBookmark,
+        soundEnabled,
+        toggleSound,
+        vibrateEnabled,
+        toggleVibrate
+    } = useGame();
 
     // Edit Modal States
-    const [isEditingName, setIsEditingName] = React.useState(false);
-    const [isEditingPhoto, setIsEditingPhoto] = React.useState(false);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [isEditingPhoto, setIsEditingPhoto] = useState(false);
+
+    // Bookmarks & Streak Modals
+    const [showBookmarksModal, setShowBookmarksModal] = useState(false);
+    const [revealedBookmarkAnswers, setRevealedBookmarkAnswers] = useState({});
+    const [showStreakModal, setShowStreakModal] = useState(false);
 
     // Reset Modal State
-    const [showResetModal, setShowResetModal] = React.useState(false);
-    const [showDeleteModal, setShowDeleteModal] = React.useState(false);
+    const [showResetModal, setShowResetModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
 
     const handleDeleteConfirm = async () => {
         try {
@@ -56,6 +78,14 @@ const Home = () => {
     // Temp State for Edits
     const [editName, setEditName] = React.useState("");
     const [editPhoto, setEditPhoto] = React.useState(null);
+    const [isEditingNameInline, setIsEditingNameInline] = React.useState(false);
+
+    const handleSaveInlineName = async () => {
+        if (editName && editName.trim()) {
+            await updateProfile(editName.trim().slice(0, 13), null);
+        }
+        setIsEditingNameInline(false);
+    };
 
     // Local timer state for display
     const [restoreTimeLeft, setRestoreTimeLeft] = React.useState("");
@@ -127,7 +157,7 @@ const Home = () => {
 
     const saveName = async () => {
         if (editName && editName.trim()) {
-            await updateProfile(editName.trim(), null);
+            await updateProfile(editName.trim().slice(0, 13), null);
         }
         setIsEditingName(false);
     };
@@ -146,12 +176,15 @@ const Home = () => {
 
     const openPhotoEdit = () => {
         setEditPhoto(userPhoto);
+        setEditName(userName || '');
+        setIsEditingNameInline(false);
         setIsEditingPhoto(true);
     };
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
         setIsEditingPhoto(false);
+        setIsEditingNameInline(false);
 
         // Clear Local Storage to prevent data leak to next user
         localStorage.removeItem('bibleQuiz_lives');
@@ -229,26 +262,62 @@ const Home = () => {
                     />
                 </div>
 
-                {/* User Name Badge (Click to edit NAME - if unlocked) */}
-                <div onClick={openNameEdit} style={{
+                {/* User Name Badge & Streak (Click to edit NAME - if unlocked) */}
+                <div style={{
                     position: 'absolute',
-                    top: '55px', // Adjusted for new header padding
+                    top: '46px',
                     left: '50%',
                     transform: 'translateX(-50%)',
-                    background: 'white',
-                    color: 'black',
-                    padding: '8px 20px',
-                    borderRadius: '20px',
-                    fontWeight: 'bold',
-                    border: '2px solid #00bcd4',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                    cursor: nameLocked ? 'default' : 'pointer',
-                    pointerEvents: nameLocked ? 'none' : 'auto'
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '4px',
+                    pointerEvents: 'auto'
                 }}>
-                    {userName}
+                    <div onClick={openNameEdit} style={{
+                        background: 'white',
+                        color: 'black',
+                        padding: '6px 18px',
+                        borderRadius: '20px',
+                        fontWeight: 'bold',
+                        border: '2px solid #00bcd4',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                        cursor: nameLocked ? 'default' : 'pointer',
+                        pointerEvents: nameLocked ? 'none' : 'auto',
+                        fontSize: '14px',
+                        whiteSpace: 'nowrap'
+                    }}>
+                        {userName}
+                    </div>
+
+                    {/* Streak Badge Pill */}
+                    <div 
+                        onClick={() => {
+                            soundService.playClick();
+                            setShowStreakModal(true);
+                        }}
+                        style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            background: 'linear-gradient(135deg, rgba(255, 152, 0, 0.95), rgba(244, 67, 54, 0.95))',
+                            color: 'white',
+                            padding: '3px 10px',
+                            borderRadius: '12px',
+                            fontSize: '11px',
+                            fontWeight: '700',
+                            boxShadow: '0 2px 6px rgba(244, 67, 54, 0.4)',
+                            cursor: 'pointer',
+                            transition: 'transform 0.15s ease'
+                        }}
+                        title="Daily Streak Info"
+                    >
+                        <span>🔥</span>
+                        <span>{streak} {streak === 1 ? 'Day' : 'Days'}</span>
+                    </div>
                 </div>
 
-                {/* Right Side: Lives, Timer, Store & Statistics */}
+                {/* Right Side: Lives, Timer, Store, Statistics, Leaderboard & Bookmarks */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '0', pointerEvents: 'auto' }}>
                     {/* Lives Container */}
                     <div style={{
@@ -289,14 +358,14 @@ const Home = () => {
                     )}
 
                     {/* Store Cart Icon */}
-                    <div onClick={() => navigate('/store')} style={{
-                        marginTop: '10px',
+                    <div onClick={() => { soundService.playClick(); navigate('/store'); }} style={{
+                        marginTop: '8px',
                         cursor: 'pointer',
                         background: 'rgba(255, 255, 255, 0.2)',
                         backdropFilter: 'blur(5px)',
                         borderRadius: '50%',
-                        width: '40px',
-                        height: '40px',
+                        width: '38px',
+                        height: '38px',
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
@@ -304,26 +373,26 @@ const Home = () => {
                         boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
                         pointerEvents: 'auto'
                     }} title="Store">
-                        <span style={{ fontSize: '20px' }}>🛒</span>
+                        <span style={{ fontSize: '18px' }}>🛒</span>
                     </div>
 
-                    {/* Statistics Icon (Below Store Button) */}
-                    <div onClick={() => navigate('/statistics')} style={{
-                        marginTop: '10px',
+                    {/* Statistics Icon */}
+                    <div onClick={() => { soundService.playClick(); navigate('/statistics'); }} style={{
+                        marginTop: '8px',
                         cursor: 'pointer',
                         background: 'rgba(255, 255, 255, 0.2)',
                         backdropFilter: 'blur(5px)',
                         borderRadius: '50%',
-                        width: '40px',
-                        height: '40px',
+                        width: '38px',
+                        height: '38px',
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
                         border: '1px solid rgba(255,255,255,0.4)',
                         boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
                         pointerEvents: 'auto'
-                    }} title="Statistics">
-                        <span style={{ fontSize: '20px' }}>📊</span>
+                    }} title="My Statistics">
+                        <span style={{ fontSize: '18px' }}>📊</span>
                     </div>
                 </div>
             </div>
@@ -342,7 +411,7 @@ const Home = () => {
                             value={editName}
                             onChange={(e) => setEditName(e.target.value)}
                             placeholder="Enter Name"
-                            maxLength={15}
+                            maxLength={13}
                             style={{ width: '100%', padding: '10px', marginBottom: '20px', fontSize: '16px', borderRadius: '5px', border: '1px solid #ccc' }}
                         />
                         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
@@ -353,100 +422,387 @@ const Home = () => {
                 </div>
             )}
 
-            {/* Edit Photo Modal */}
+            {/* Edit Profile & Settings Modal */}
             {isEditingPhoto && (
                 <div style={{
                     position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
                     background: 'rgba(0,0,0,0.8)', zIndex: 10000,
-                    display: 'flex', justifyContent: 'center', alignItems: 'center'
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    padding: '15px'
                 }}>
                     <div style={{
                         background: 'white',
-                        padding: '25px',
-                        borderRadius: '15px',
-                        width: '85%',
-                        maxWidth: '320px',
+                        padding: '24px 20px',
+                        borderRadius: '16px',
+                        width: '92%',
+                        maxWidth: '350px',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
                         textAlign: 'center',
-                        boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+                        boxShadow: '0 8px 30px rgba(0,0,0,0.35)',
                         position: 'relative'
                     }}>
-                        {/* Close Button "X" */}
+                        {/* Close / Cancel Button "X" */}
                         <button
-                            onClick={() => setIsEditingPhoto(false)}
+                            onClick={() => {
+                                setEditPhoto(userPhoto);
+                                setIsEditingNameInline(false);
+                                setIsEditingPhoto(false);
+                            }}
                             style={{
                                 position: 'absolute',
-                                top: '10px',
-                                right: '10px',
-                                background: 'none',
+                                top: '12px',
+                                right: '12px',
+                                background: '#f0f0f0',
                                 border: 'none',
-                                fontSize: '20px',
+                                width: '32px',
+                                height: '32px',
+                                borderRadius: '50%',
+                                fontSize: '16px',
                                 cursor: 'pointer',
-                                color: '#666'
+                                color: '#555',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 'bold'
                             }}
+                            title="Cancel / Close"
                         >
                             ✕
                         </button>
 
-                        <h2 style={{ color: 'black', marginTop: 0, marginBottom: '20px' }}>Profile Photo</h2>
+                        <h2 style={{ color: '#1a1a1a', margin: '0 0 20px 0', fontSize: '20px', fontWeight: '700' }}>
+                            Profile & Settings
+                        </h2>
 
+                        {/* Top Profile Summary: Photo on Left, Name with Pencil & Streak on Right */}
                         <div style={{
-                            width: '120px',
-                            height: '120px',
-                            borderRadius: '50%',
-                            background: '#f0f0f0',
-                            margin: '0 auto 20px',
-                            overflow: 'hidden',
-                            border: '3px solid #eee',
                             display: 'flex',
-                            justifyContent: 'center',
-                            alignItems: 'center'
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '16px',
+                            marginBottom: editPhoto !== userPhoto ? '12px' : '20px',
+                            padding: '0 6px'
                         }}>
-                            {editPhoto ? (
-                                <img src={editPhoto} alt="Preview" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            ) : (
-                                <span style={{ color: '#aaa', fontSize: '30px' }}>📷</span>
-                            )}
+                            {/* Left: Avatar with Camera Badge & Tap Hint */}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+                                <label
+                                    htmlFor="profile-photo-input"
+                                    style={{
+                                        position: 'relative',
+                                        display: 'inline-block',
+                                        cursor: 'pointer',
+                                        userSelect: 'none'
+                                    }}
+                                >
+                                    <input
+                                        id="profile-photo-input"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handlePhotoChange}
+                                        style={{ display: 'none' }}
+                                    />
+                                    <div style={{
+                                        width: '105px',
+                                        height: '105px',
+                                        borderRadius: '50%',
+                                        background: '#f5f7fa',
+                                        overflow: 'hidden',
+                                        border: '3px solid #00bcd4',
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                        position: 'relative'
+                                    }}>
+                                        {editPhoto ? (
+                                            <img src={editPhoto} alt="Profile Preview" referrerPolicy="no-referrer" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            <span style={{ color: '#888', fontSize: '36px' }}>📷</span>
+                                        )}
+                                    </div>
+                                    {/* Camera Badge Icon on bottom-right */}
+                                    <div style={{
+                                        position: 'absolute',
+                                        bottom: '2px',
+                                        right: '2px',
+                                        background: '#2196F3',
+                                        color: 'white',
+                                        width: '30px',
+                                        height: '30px',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '14px',
+                                        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                                        border: '2px solid white'
+                                    }}>
+                                        📷
+                                    </div>
+                                </label>
+                                <div style={{ fontSize: '11px', color: '#777', marginTop: '6px' }}>
+                                    Tap photo to choose new
+                                </div>
+                            </div>
+
+                            {/* Right: Name (Editable with Pencil) & Streak */}
+                            <div style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'flex-start',
+                                justifyContent: 'center',
+                                flex: 1,
+                                minWidth: 0,
+                                paddingLeft: '6px'
+                            }}>
+                                {/* Name + Pencil Button */}
+                                {isEditingNameInline ? (
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
+                                        <input
+                                            type="text"
+                                            value={editName}
+                                            onChange={(e) => setEditName(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') handleSaveInlineName();
+                                                if (e.key === 'Escape') setIsEditingNameInline(false);
+                                            }}
+                                            placeholder="Enter Name"
+                                            maxLength={13}
+                                            autoFocus
+                                            style={{
+                                                width: '100%',
+                                                padding: '6px 8px',
+                                                fontSize: '15px',
+                                                borderRadius: '6px',
+                                                border: '2px solid #00bcd4',
+                                                outline: 'none',
+                                                color: '#1a1a1a',
+                                                boxSizing: 'border-box'
+                                            }}
+                                        />
+                                        <button
+                                            onClick={handleSaveInlineName}
+                                            style={{
+                                                background: '#4CAF50',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                padding: '6px 8px',
+                                                cursor: 'pointer',
+                                                fontSize: '13px',
+                                                fontWeight: 'bold',
+                                                flexShrink: 0
+                                            }}
+                                            title="Save"
+                                        >
+                                            ✓
+                                        </button>
+                                        <button
+                                            onClick={() => setIsEditingNameInline(false)}
+                                            style={{
+                                                background: '#e0e0e0',
+                                                color: '#333',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                padding: '6px 8px',
+                                                cursor: 'pointer',
+                                                fontSize: '13px',
+                                                flexShrink: 0
+                                            }}
+                                            title="Cancel"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div
+                                        onClick={() => {
+                                            setEditName(userName || '');
+                                            setIsEditingNameInline(true);
+                                        }}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            cursor: 'pointer',
+                                            maxWidth: '100%'
+                                        }}
+                                        title="Tap to edit name"
+                                    >
+                                        <span style={{
+                                            fontSize: '20px',
+                                            fontWeight: '700',
+                                            color: '#1a1a1a',
+                                            lineHeight: 1.2,
+                                            wordBreak: 'break-word',
+                                            textAlign: 'left'
+                                        }}>
+                                            {userName || 'User'}
+                                        </span>
+                                        <span style={{
+                                            fontSize: '16px',
+                                            color: '#666',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            flexShrink: 0
+                                        }}>
+                                            ✏️
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Streak Display: Flame + Streak Number */}
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '8px',
+                                    marginTop: '12px'
+                                }}>
+                                    <span style={{ fontSize: '32px', lineHeight: 1 }}>🔥</span>
+                                    <span style={{ fontSize: '26px', fontWeight: '800', color: '#1a1a1a', lineHeight: 1 }}>
+                                        {streak || 0}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Top Actions: Choose & Logout */}
-                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginBottom: '15px' }}>
-                            <label style={{
-                                padding: '10px 15px',
-                                background: '#2196F3',
-                                color: 'white',
-                                borderRadius: '5px',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                fontWeight: 'bold'
-                            }}>
-                                Choose New
-                                <input type="file" accept="image/*" onChange={handlePhotoChange} style={{ display: 'none' }} />
-                            </label>
-
+                        {/* Save Photo Button (Shown when user has selected a new photo) */}
+                        {editPhoto && editPhoto !== userPhoto && (
                             <button
-                                onClick={handleLogout}
+                                onClick={savePhoto}
                                 style={{
-                                    padding: '10px 15px',
-                                    background: '#f44336',
+                                    width: '100%',
+                                    padding: '10px',
+                                    background: 'linear-gradient(135deg, #11998e, #38ef7d)',
                                     color: 'white',
                                     border: 'none',
-                                    borderRadius: '5px',
-                                    fontSize: '14px',
+                                    borderRadius: '10px',
+                                    fontSize: '15px',
                                     fontWeight: 'bold',
-                                    cursor: 'pointer'
+                                    marginBottom: '16px',
+                                    cursor: 'pointer',
+                                    boxShadow: '0 4px 12px rgba(56, 239, 125, 0.35)'
                                 }}
                             >
-                                Logout
+                                💾 Save New Photo
                             </button>
-                        </div>
+                        )}
 
-                        <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginBottom: '15px' }}>
-                            <button onClick={() => setIsEditingPhoto(false)} style={{ padding: '10px 25px', background: '#ccc', border: 'none', borderRadius: '5px', fontSize: '16px', fontWeight: '500', color: '#333' }}>Cancel</button>
-                            <button onClick={savePhoto} style={{ padding: '10px 25px', background: '#4CAF50', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px', fontWeight: '500' }}>Save</button>
+                        {/* Sound & Vibration Controls Section */}
+                        <div style={{
+                            background: '#f8f9fa',
+                            borderRadius: '12px',
+                            padding: '12px',
+                            marginBottom: '16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px',
+                            border: '1px solid #e9ecef',
+                            textAlign: 'left'
+                        }}>
+                            {/* Sound Control */}
+                            <div
+                                onClick={() => {
+                                    toggleSound();
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '10px 12px',
+                                    background: soundEnabled ? 'rgba(76, 175, 80, 0.08)' : 'white',
+                                    border: soundEnabled ? '1.5px solid #4CAF50' : '1px solid #ddd',
+                                    borderRadius: '10px',
+                                    cursor: 'pointer',
+                                    userSelect: 'none',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <span style={{ fontSize: '22px' }}>{soundEnabled ? '🔊' : '🔇'}</span>
+                                    <div>
+                                        <div style={{ fontWeight: '600', fontSize: '14px', color: '#222' }}>Sound Effects</div>
+                                        <div style={{ fontSize: '11px', color: soundEnabled ? '#2e7d32' : '#888' }}>
+                                            {soundEnabled ? 'Audio ON' : 'Muted'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style={{
+                                    width: '42px',
+                                    height: '24px',
+                                    background: soundEnabled ? '#4CAF50' : '#ccc',
+                                    borderRadius: '12px',
+                                    position: 'relative',
+                                    transition: 'background 0.2s ease'
+                                }}>
+                                    <div style={{
+                                        width: '18px',
+                                        height: '18px',
+                                        borderRadius: '50%',
+                                        background: 'white',
+                                        position: 'absolute',
+                                        top: '3px',
+                                        left: soundEnabled ? '21px' : '3px',
+                                        transition: 'left 0.2s ease',
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                                    }} />
+                                </div>
+                            </div>
+
+                            {/* Vibration Control */}
+                            <div
+                                onClick={() => {
+                                    toggleVibrate();
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '10px 12px',
+                                    background: vibrateEnabled ? 'rgba(33, 150, 243, 0.08)' : 'white',
+                                    border: vibrateEnabled ? '1.5px solid #2196F3' : '1px solid #ddd',
+                                    borderRadius: '10px',
+                                    cursor: 'pointer',
+                                    userSelect: 'none',
+                                    transition: 'all 0.2s ease'
+                                }}
+                            >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                    <span style={{ fontSize: '22px' }}>{vibrateEnabled ? '📳' : '📴'}</span>
+                                    <div>
+                                        <div style={{ fontWeight: '600', fontSize: '14px', color: '#222' }}>Haptic Vibration</div>
+                                        <div style={{ fontSize: '11px', color: vibrateEnabled ? '#1976d2' : '#888' }}>
+                                            {vibrateEnabled ? 'Vibration ON' : 'Vibration OFF'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style={{
+                                    width: '42px',
+                                    height: '24px',
+                                    background: vibrateEnabled ? '#2196F3' : '#ccc',
+                                    borderRadius: '12px',
+                                    position: 'relative',
+                                    transition: 'background 0.2s ease'
+                                }}>
+                                    <div style={{
+                                        width: '18px',
+                                        height: '18px',
+                                        borderRadius: '50%',
+                                        background: 'white',
+                                        position: 'absolute',
+                                        top: '3px',
+                                        left: vibrateEnabled ? '21px' : '3px',
+                                        transition: 'left 0.2s ease',
+                                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                                    }} />
+                                </div>
+                            </div>
                         </div>
 
                         {/* User Email & Reset Data */}
-                        {isLoggedIn && (
+                        {isLoggedIn ? (
                             <>
                                 {/* Email Display */}
                                 {session?.user?.email && (
@@ -463,39 +819,76 @@ const Home = () => {
                                     </div>
                                 )}
 
-                                <button
-                                    onClick={() => setShowResetModal(true)}
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px',
-                                        background: '#ff9800',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '5px',
-                                        fontSize: '16px',
-                                        marginTop: '10px'
-                                    }}
-                                >
-                                    Reset My Data
-                                </button>
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+                                    <button
+                                        onClick={handleLogout}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px',
+                                            background: '#f44336',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            fontSize: '14px',
+                                            fontWeight: 'bold',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Logout
+                                    </button>
+                                    <button
+                                        onClick={() => setShowResetModal(true)}
+                                        style={{
+                                            flex: 1,
+                                            padding: '10px',
+                                            background: '#ff9800',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '6px',
+                                            fontSize: '14px',
+                                            fontWeight: 'bold',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Reset Data
+                                    </button>
+                                </div>
 
                                 <button
                                     onClick={() => setShowDeleteModal(true)}
                                     style={{
                                         width: '100%',
-                                        padding: '12px',
+                                        padding: '10px',
                                         background: '#d32f2f', // Red
                                         color: 'white',
                                         border: 'none',
-                                        borderRadius: '5px',
-                                        fontSize: '16px',
+                                        borderRadius: '6px',
+                                        fontSize: '14px',
                                         marginTop: '10px',
-                                        fontWeight: 'bold'
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer'
                                     }}
                                 >
                                     Delete Account
                                 </button>
                             </>
+                        ) : (
+                            <button
+                                onClick={handleLogout}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px',
+                                    background: '#f44336',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '6px',
+                                    fontSize: '14px',
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Reset / Sign Out
+                            </button>
                         )}
                     </div>
                 </div>
@@ -581,10 +974,73 @@ const Home = () => {
                         <span className="btn-main-text" style={{ color: advancedEnabled ? '#dc2626' : '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             {advancedEnabled ? '🔥' : '🔒'} Advanced
                         </span>
-                        <span className="btn-sub-text" style={{ color: '#666' }}>
-                            ఉన్నత స్థాయి
-                        </span>
                     </button>
+                </div>
+
+                {/* Secondary Quick Action Cards: Leaderboard & Bookmarks */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '12px',
+                    width: '100%',
+                    maxWidth: '360px',
+                    marginTop: '16px'
+                }}>
+                    {/* Leaderboard Card */}
+                    <div 
+                        onClick={() => {
+                            soundService.playClick();
+                            navigate('/statistics', { state: { tab: 'leaderboard' } });
+                        }}
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.18)',
+                            backdropFilter: 'blur(10px)',
+                            WebkitBackdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255, 215, 0, 0.45)',
+                            borderRadius: '16px',
+                            padding: '12px 10px',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                            transition: 'transform 0.15s ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}
+                    >
+                        <span style={{ fontSize: '24px' }}>🏆</span>
+                        <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '13px' }}>Leaderboard</span>
+                        <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '11px' }}>Global Ranks</span>
+                    </div>
+
+                    {/* Saved Questions (Bookmarks) Card */}
+                    <div 
+                        onClick={() => {
+                            soundService.playClick();
+                            setShowBookmarksModal(true);
+                        }}
+                        style={{
+                            background: 'rgba(255, 255, 255, 0.18)',
+                            backdropFilter: 'blur(10px)',
+                            WebkitBackdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(255, 255, 255, 0.35)',
+                            borderRadius: '16px',
+                            padding: '12px 10px',
+                            textAlign: 'center',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.15)',
+                            transition: 'transform 0.15s ease',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '4px'
+                        }}
+                    >
+                        <span style={{ fontSize: '24px' }}>⭐</span>
+                        <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '13px' }}>Saved ({bookmarks.length})</span>
+                        <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '11px' }}>Review Questions</span>
+                    </div>
                 </div>
             </div>
 
@@ -731,6 +1187,225 @@ const Home = () => {
                 confirmText="Delete Forever"
                 isDanger={true}
             />
+
+            {/* Bookmarks / Saved Difficult Questions Modal */}
+            {showBookmarksModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(0, 0, 0, 0.75)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 10000,
+                    padding: '20px'
+                }}>
+                    <div style={{
+                        background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
+                        color: 'white',
+                        padding: '24px 20px',
+                        borderRadius: '24px',
+                        width: '100%',
+                        maxWidth: '420px',
+                        maxHeight: '85vh',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        position: 'relative'
+                    }}>
+                        {/* Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '12px' }}>
+                            <div>
+                                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span>⭐</span> Saved Questions ({bookmarks.length})
+                                </h2>
+                                <span style={{ fontSize: '12px', color: '#94a3b8' }}>కష్టమైన ప్రశ్నల సమాహారం</span>
+                            </div>
+                            <button
+                                onClick={() => setShowBookmarksModal(false)}
+                                style={{
+                                    background: 'rgba(255,255,255,0.1)',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    color: '#cbd5e1',
+                                    fontSize: '16px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* List */}
+                        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', paddingRight: '4px' }}>
+                            {bookmarks.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '40px 10px', color: '#94a3b8' }}>
+                                    <div style={{ fontSize: '48px', marginBottom: '12px' }}>📖</div>
+                                    <h3 style={{ color: '#f1f5f9', margin: '0 0 6px 0', fontSize: '16px' }}>No saved questions yet</h3>
+                                    <p style={{ fontSize: '13px', margin: 0, lineHeight: 1.5 }}>
+                                        During any quiz, tap the star (☆) button at the top-right of a question to save it here for quick review!
+                                    </p>
+                                </div>
+                            ) : (
+                                bookmarks.map((b, idx) => {
+                                    const isRevealed = revealedBookmarkAnswers[idx];
+                                    const correctOptionText = Array.isArray(b.options) && typeof b.correct === 'number'
+                                        ? b.options[b.correct]
+                                        : 'Answer saved';
+
+                                    return (
+                                        <div key={idx} style={{
+                                            background: 'rgba(255, 255, 255, 0.05)',
+                                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                                            borderRadius: '16px',
+                                            padding: '14px',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '8px'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span style={{
+                                                    fontSize: '11px',
+                                                    fontWeight: '700',
+                                                    color: '#38ef7d',
+                                                    background: 'rgba(56, 239, 125, 0.15)',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '8px'
+                                                }}>
+                                                    {bookNameMap[b.bookName] || b.bookName || 'Bible'} • Ch {b.level || '1'}
+                                                </span>
+
+                                                <button
+                                                    onClick={() => toggleBookmark(b)}
+                                                    style={{
+                                                        background: 'transparent',
+                                                        border: 'none',
+                                                        color: '#f87171',
+                                                        fontSize: '12px',
+                                                        cursor: 'pointer',
+                                                        fontWeight: '600'
+                                                    }}
+                                                    title="Remove bookmark"
+                                                >
+                                                    🗑️ Remove
+                                                </button>
+                                            </div>
+
+                                            <p style={{ margin: 0, fontSize: '14px', lineHeight: 1.4, color: '#f1f5f9', fontWeight: '500' }}>
+                                                {b.question}
+                                            </p>
+
+                                            {/* Answer Reveal Toggle */}
+                                            {isRevealed ? (
+                                                <div style={{
+                                                    background: 'rgba(56, 239, 125, 0.15)',
+                                                    border: '1px solid rgba(56, 239, 125, 0.3)',
+                                                    borderRadius: '10px',
+                                                    padding: '8px 12px',
+                                                    fontSize: '13px',
+                                                    color: '#4ade80',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    ✓ సరైన సమాధానం: {correctOptionText}
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => {
+                                                        soundService.playClick();
+                                                        setRevealedBookmarkAnswers(prev => ({ ...prev, [idx]: true }));
+                                                    }}
+                                                    style={{
+                                                        background: 'rgba(255, 255, 255, 0.08)',
+                                                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                                                        borderRadius: '8px',
+                                                        color: '#93c5fd',
+                                                        padding: '6px 10px',
+                                                        fontSize: '12px',
+                                                        cursor: 'pointer',
+                                                        alignSelf: 'flex-start'
+                                                    }}
+                                                >
+                                                    👁️ Show Answer
+                                                </button>
+                                            )}
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Daily Streak Info Modal */}
+            {showStreakModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(0, 0, 0, 0.75)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 10000,
+                    padding: '20px'
+                }}>
+                    <div style={{
+                        background: 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
+                        color: 'white',
+                        padding: '28px 24px',
+                        borderRadius: '24px',
+                        width: '100%',
+                        maxWidth: '340px',
+                        textAlign: 'center',
+                        boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
+                        border: '1px solid rgba(255, 152, 0, 0.3)'
+                    }}>
+                        <div style={{ fontSize: '48px', marginBottom: '10px' }}>🔥</div>
+                        <h2 style={{ margin: '0 0 6px 0', fontSize: '22px', fontWeight: '800' }}>
+                            {streak} Day Streak!
+                        </h2>
+                        <p style={{ color: '#fdba74', fontSize: '13px', fontWeight: '600', margin: '0 0 16px 0' }}>
+                            ప్రతిరోజూ బైబిల్ జ్ఞానాన్ని పెంచుకోండి
+                        </p>
+                        <p style={{ color: '#cbd5e1', fontSize: '13px', lineHeight: 1.5, margin: '0 0 24px 0' }}>
+                            Play at least one quiz chapter every day to keep your streak burning and build a strong daily Bible reading habit!
+                        </p>
+                        <button
+                            onClick={() => {
+                                soundService.playClick();
+                                setShowStreakModal(false);
+                            }}
+                            style={{
+                                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '14px',
+                                padding: '12px 28px',
+                                fontSize: '15px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                width: '100%',
+                                boxShadow: '0 4px 15px rgba(249, 115, 22, 0.4)'
+                            }}
+                        >
+                            Keep Playing!
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

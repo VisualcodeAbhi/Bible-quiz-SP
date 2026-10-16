@@ -5,6 +5,7 @@ import { bookNameMap } from '../bookNames';
 import Loader from '../components/Loader';
 import { useGame } from '../context/GameContext';
 import { AdMobService } from '../services/admob';
+import { soundService } from '../services/soundService';
 import { Toast } from '@capacitor/toast';
 import ConfirmModal from '../components/ConfirmModal';
 
@@ -51,7 +52,23 @@ import { loadQuizBookData } from '../lib/quizDataLoader';
 const Quiz = () => {
     const { difficulty, book: bookFile, level } = useParams();
     const navigate = useNavigate();
-    const { lives, deductLife, hints, consumeHint, addHints, updateLevelProgress, getProgressForDifficulty, progress } = useGame();
+    const { 
+        lives, 
+        deductLife, 
+        hints, 
+        consumeHint, 
+        addHints, 
+        updateLevelProgress, 
+        getProgressForDifficulty, 
+        progress,
+        soundEnabled,
+        toggleSound,
+        bookmarks,
+        toggleBookmark,
+        isBookmarked,
+        streak,
+        recordDailyPlay
+    } = useGame();
 
     const basePath = difficulty ? `/${difficulty}` : '';
 
@@ -136,6 +153,9 @@ const Quiz = () => {
         }
 
         if (timer > 0) {
+            if (timer <= 5) {
+                soundService.playTick();
+            }
             timerRef.current = setTimeout(() => setTimer(timer - 1), 1000);
         } else {
             handleOptionClick(-1);
@@ -149,7 +169,14 @@ const Quiz = () => {
 
         setSelectedOption(index);
         const currentQuestion = questions[currentQuestionIndex];
-        const correct = index === currentQuestion.correct;
+        const correct = index === currentQuestion?.correct;
+
+        soundService.playClick();
+        if (correct) {
+            soundService.playCorrect();
+        } else {
+            soundService.playWrong();
+        }
 
         setIsCorrect(correct);
         setFeedbackType(correct ? 'correct' : 'wrong');
@@ -164,7 +191,7 @@ const Quiz = () => {
         }
 
         const isLastQuestion = currentQuestionIndex >= questions.length - 1;
-        const delay = isLastQuestion ? 400 : 600;
+        const delay = isLastQuestion ? 500 : 700;
 
         setTimeout(() => {
             setShowFeedback(false);
@@ -263,6 +290,10 @@ const Quiz = () => {
         setScore(finalScore);
         setQuizFinished(true);
         const passed = (finalScore / questions.length) >= 0.5;
+        if (passed) {
+            soundService.playFanfare();
+        }
+        recordDailyPlay();
         saveProgress(finalScore, passed);
     };
 
@@ -313,7 +344,7 @@ const Quiz = () => {
                             : 'linear-gradient(135deg, #cb2d3e 0%, #ef473a 100%)',
                         padding: '30px 50px',
                         borderRadius: '25px',
-                        marginBottom: '30px',
+                        marginBottom: '20px',
                         border: '2px solid rgba(255, 255, 255, 0.3)',
                         boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
                         color: 'white'
@@ -322,6 +353,28 @@ const Quiz = () => {
                             Score: {score} / {questions.length}
                         </p>
                     </div>
+
+                    {streak > 0 && (
+                        <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: 'linear-gradient(135deg, rgba(255, 152, 0, 0.25), rgba(244, 67, 54, 0.25))',
+                            border: '1px solid rgba(255, 152, 0, 0.6)',
+                            backdropFilter: 'blur(10px)',
+                            WebkitBackdropFilter: 'blur(10px)',
+                            color: '#ffb74d',
+                            padding: '10px 22px',
+                            borderRadius: '30px',
+                            fontWeight: 'bold',
+                            fontSize: '16px',
+                            marginBottom: '25px',
+                            boxShadow: '0 4px 16px rgba(255, 152, 0, 0.25)'
+                        }}>
+                            <span style={{ fontSize: '20px' }}>🔥</span>
+                            <span>{streak} Day Streak! ప్రతిరోజూ సాధన!</span>
+                        </div>
+                    )}
 
                     <div className="btn-group">
                         {parseInt(level) < bookData.chapters && passed && (
@@ -380,20 +433,53 @@ const Quiz = () => {
                         width: '100%',
                         height: '100%',
                         zIndex: 100,
+                        flexDirection: 'column',
                         justifyContent: 'center',
                         alignItems: 'center',
                         pointerEvents: 'none',
-                        background: 'rgba(0,0,0,0.3)'
+                        background: 'rgba(0,0,0,0.5)',
+                        backdropFilter: 'blur(4px)',
+                        WebkitBackdropFilter: 'blur(4px)'
                     }}>
                         <div className={`feedback-icon ${feedbackType}`} style={{
-                            fontSize: '100px',
+                            fontSize: '90px',
                             fontWeight: 'bold',
                             color: feedbackType === 'correct' ? '#4CAF50' : '#F44336',
-                            textShadow: feedbackType === 'correct' ? '0 0 20px rgba(76, 175, 80, 0.8)' : '0 0 20px rgba(244, 67, 54, 0.8)',
-                            animation: 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                            textShadow: feedbackType === 'correct' ? '0 0 25px rgba(76, 175, 80, 0.9)' : '0 0 25px rgba(244, 67, 54, 0.9)',
+                            animation: 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                         }}>
                             {feedbackType === 'correct' ? '✓' : '✗'}
                         </div>
+
+                        {/* Scripture Context Card - Commented out for now (will discuss later) */}
+                        {/*
+                        <div style={{
+                            marginTop: '16px',
+                            background: 'rgba(255, 255, 255, 0.2)',
+                            backdropFilter: 'blur(12px)',
+                            WebkitBackdropFilter: 'blur(12px)',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            borderRadius: '16px',
+                            padding: '12px 24px',
+                            color: 'white',
+                            textAlign: 'center',
+                            maxWidth: '85%',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+                            animation: 'fadeIn 0.3s ease'
+                        }}>
+                            <div style={{ fontSize: '13px', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.9 }}>
+                                📖 లేఖన భాగం (Scripture)
+                            </div>
+                            <div style={{ fontSize: '18px', fontWeight: 'bold', marginTop: '4px', fontFamily: 'Mandali, sans-serif' }}>
+                                {bookNameMap[bookData.bookName] || bookData.bookName} - అధ్యాయము {level}
+                            </div>
+                            {feedbackType === 'wrong' && questions[currentQuestionIndex] && (
+                                <div style={{ fontSize: '15px', color: '#81C784', marginTop: '6px', fontWeight: 'bold' }}>
+                                    సరైనది: {questions[currentQuestionIndex].options[questions[currentQuestionIndex].correct]}
+                                </div>
+                            )}
+                        </div>
+                        */}
                     </div>
                 )}
 
@@ -403,47 +489,91 @@ const Quiz = () => {
                     </div>
                 )}
 
-                <header className="header">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div className="back-arrow" onClick={() => navigate(-1)} style={{ marginRight: 0 }}>&#8592;</div>
-                        <div onClick={adLoadingAction === 'hint' ? null : handleHint} style={{
-                            background: 'rgba(255,255,255,0.2)',
-                            borderRadius: '20px',
-                            padding: '8px 12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px',
-                            cursor: 'pointer',
-                            border: hints > 0 ? '1px solid gold' : '1px solid #999',
-                            transition: 'transform 0.1s',
-                            zIndex: 10
-                        }}
-                            onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
-                            onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
-                            onTouchStart={e => e.currentTarget.style.transform = 'scale(0.95)'}
-                            onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
-                        >
-                            {adLoadingAction === 'hint' ? (
-                                <div style={{
-                                    border: '2px solid #fff', borderTop: '2px solid transparent',
-                                    borderRadius: '50%', width: '14px', height: '14px',
-                                    animation: 'spin 1s linear infinite'
-                                }} />
-                            ) : (
-                                <>
-                                    <span style={{ fontSize: '18px' }}>💡</span>
-                                    <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{hints}</span>
-                                </>
-                            )}
-                        </div>
-                    </div>
+                {(() => {
+                    const timerProgress = Math.max(0, Math.min(30, timer));
+                    const timerCircumference = 131.95;
+                    const timerOffset = timerCircumference * (1 - timerProgress / 30);
+                    const timerState = timer > 10 ? 'safe' : timer > 5 ? 'warning' : 'danger';
 
-                    <div className="title-container" style={{ textAlign: 'center', width: 'auto', flex: 1 }}>
-                        <h1 id="book-title" style={{ fontSize: '18px', margin: 0 }}>{bookNameMap[bookData.bookName] || bookData.bookName}</h1>
-                        <div className="chapter-info" style={{ fontSize: '12px', color: '#fff' }}>Ch {level} - {currentQuestionIndex + 1}/{questions.length}</div>
-                    </div>
-                    <div className="timer-circle" style={{ margin: 0, justifySelf: 'end' }}>{timer}</div>
-                </header>
+                    return (
+                        <header className="header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', width: '100%' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div className="back-arrow" onClick={() => navigate(-1)} style={{ marginRight: 0 }}>&#8592;</div>
+                                <div onClick={adLoadingAction === 'hint' ? null : handleHint} style={{
+                                    background: 'rgba(255,255,255,0.2)',
+                                    borderRadius: '20px',
+                                    padding: '8px 12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    cursor: 'pointer',
+                                    border: hints > 0 ? '1px solid gold' : '1px solid #999',
+                                    transition: 'transform 0.1s',
+                                    zIndex: 10
+                                }}
+                                    onMouseDown={e => e.currentTarget.style.transform = 'scale(0.95)'}
+                                    onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                                    onTouchStart={e => e.currentTarget.style.transform = 'scale(0.95)'}
+                                    onTouchEnd={e => e.currentTarget.style.transform = 'scale(1)'}
+                                    title="Get a Hint"
+                                >
+                                    {adLoadingAction === 'hint' ? (
+                                        <div style={{
+                                            border: '2px solid #fff', borderTop: '2px solid transparent',
+                                            borderRadius: '50%', width: '14px', height: '14px',
+                                            animation: 'spin 1s linear infinite'
+                                        }} />
+                                    ) : (
+                                        <>
+                                            <span style={{ fontSize: '18px' }}>💡</span>
+                                            <span style={{ fontSize: '14px', fontWeight: 'bold' }}>{hints}</span>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Audio Sound Toggle */}
+                                <div
+                                    onClick={toggleSound}
+                                    style={{
+                                        background: soundEnabled ? 'rgba(56, 239, 125, 0.25)' : 'rgba(255, 255, 255, 0.15)',
+                                        borderRadius: '20px',
+                                        padding: '8px 10px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer',
+                                        border: soundEnabled ? '1px solid #38ef7d' : '1px solid rgba(255,255,255,0.3)',
+                                        transition: 'all 0.2s ease',
+                                        zIndex: 10
+                                    }}
+                                    title={soundEnabled ? "Mute Game Audio" : "Enable Game Audio"}
+                                >
+                                    <span style={{ fontSize: '15px' }}>{soundEnabled ? '🔊' : '🔇'}</span>
+                                </div>
+                            </div>
+
+                            <div className="title-container" style={{ textAlign: 'center', width: 'auto', flex: 1, padding: '0 8px' }}>
+                                <h1 id="book-title" style={{ fontSize: '18px', margin: 0 }}>{bookNameMap[bookData.bookName] || bookData.bookName}</h1>
+                                <div className="chapter-info" style={{ fontSize: '12px', color: '#fff' }}>Ch {level} - {currentQuestionIndex + 1}/{questions.length}</div>
+                            </div>
+
+                            <div className={`premium-timer ${timerState}`} style={{ margin: 0, flexShrink: 0 }}>
+                                <svg viewBox="0 0 50 50">
+                                    <circle className="premium-timer-track" cx="25" cy="25" r="21" />
+                                    <circle
+                                        className="premium-timer-bar"
+                                        cx="25"
+                                        cy="25"
+                                        r="21"
+                                        strokeDasharray={timerCircumference}
+                                        strokeDashoffset={timerOffset}
+                                    />
+                                </svg>
+                                <span className="premium-timer-text">{timer}</span>
+                            </div>
+                        </header>
+                    );
+                })()}
 
                 <div className="quiz-content" style={{
                     flex: 1,
@@ -457,14 +587,49 @@ const Quiz = () => {
                 }}>
                     <img src="/images/Logo1.png" alt="Quiz Logo" style={{ width: '220px', height: 'auto', marginBottom: '20px' }} />
 
-                    <div className="question-box">
-                        <p>{currentQuestion.question}</p>
+                    <div className="question-box" style={{ position: 'relative' }}>
+                        {/* Bookmark Question Star */}
+                        <button
+                            type="button"
+                            className="bookmark-btn"
+                            onClick={() => toggleBookmark({
+                                question: currentQuestion.question,
+                                options: currentQuestion.options,
+                                correct: currentQuestion.correct,
+                                bookName: bookData?.bookName,
+                                level,
+                                difficulty: difficulty || 'beginner'
+                            })}
+                            style={{
+                                position: 'absolute',
+                                top: '8px',
+                                right: '10px',
+                                background: isBookmarked(currentQuestion.question) ? 'rgba(255, 215, 0, 0.25)' : 'rgba(255, 255, 255, 0.12)',
+                                border: isBookmarked(currentQuestion.question) ? '1px solid #ffd700' : '1px solid rgba(255,255,255,0.25)',
+                                borderRadius: '50%',
+                                width: '32px',
+                                height: '32px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                color: isBookmarked(currentQuestion.question) ? '#ffd700' : 'rgba(255,255,255,0.6)',
+                                fontSize: '16px',
+                                transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                            }}
+                            title={isBookmarked(currentQuestion.question) ? "Saved in Bookmarks" : "Save this Question"}
+                            aria-label="Bookmark Question"
+                        >
+                            {isBookmarked(currentQuestion.question) ? '★' : '☆'}
+                        </button>
+                        <p style={{ paddingRight: '22px' }}>{currentQuestion.question}</p>
                     </div>
 
                     <div className="options-container">
                         {currentQuestion.options.map((option, idx) => {
                             let className = "option-btn";
                             const isDisabled = disabledOptions.includes(idx);
+                            const optionLabel = String.fromCharCode(65 + idx);
 
                             if (selectedOption !== null) {
                                 if (idx === currentQuestion.correct) className += " correct";
@@ -472,7 +637,7 @@ const Quiz = () => {
                             }
 
                             if (isDisabled) {
-                                return <div key={idx} style={{ visibility: 'hidden', height: '50px', margin: '5px', width: '100%' }}></div>;
+                                return <div key={idx} style={{ visibility: 'hidden', height: '60px', margin: '5px', width: '100%' }}></div>;
                             }
 
                             return (
@@ -482,7 +647,9 @@ const Quiz = () => {
                                     onClick={() => handleOptionClick(idx)}
                                     disabled={selectedOption !== null}
                                 >
-                                    {option}
+                                    <span className="option-badge">{optionLabel}</span>
+                                    <span className="option-text">{option}</span>
+                                    <span className="option-spacer" aria-hidden="true" />
                                 </button>
                             );
                         })}
