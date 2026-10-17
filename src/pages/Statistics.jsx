@@ -917,23 +917,21 @@ const Statistics = () => {
                                                             <span style={{ fontSize: '13px', fontWeight: '700', color: user.isCurrent ? '#38ef7d' : '#fff' }}>
                                                                 {user.name} {user.isCurrent && '(You)'}
                                                             </span>
-                                                            {user.streak > 0 && (
-                                                                <span style={{
-                                                                    display: 'inline-flex',
-                                                                    alignItems: 'center',
-                                                                    gap: '2px',
-                                                                    background: 'rgba(255, 152, 0, 0.2)',
-                                                                    border: '1px solid rgba(255, 152, 0, 0.45)',
-                                                                    borderRadius: '8px',
-                                                                    padding: '1px 6px',
-                                                                    fontSize: '10.5px',
-                                                                    fontWeight: '800',
-                                                                    color: '#ffb74d'
-                                                                }} title={`${user.streak} Day Streak`}>
-                                                                    <span>🔥</span>
-                                                                    <span>{user.streak}</span>
-                                                                </span>
-                                                            )}
+                                                            <span style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '2px',
+                                                                background: (user.streak > 0) ? 'rgba(255, 152, 0, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                                                                border: (user.streak > 0) ? '1px solid rgba(255, 152, 0, 0.45)' : '1px solid rgba(255, 255, 255, 0.15)',
+                                                                borderRadius: '8px',
+                                                                padding: '1px 6px',
+                                                                fontSize: '10.5px',
+                                                                fontWeight: '800',
+                                                                color: (user.streak > 0) ? '#ffb74d' : '#cbd5e1'
+                                                            }} title={`${user.streak || 0} Day Streak`}>
+                                                                <span>🔥</span>
+                                                                <span>{user.streak || 0}</span>
+                                                            </span>
                                                         </div>
                                                         <div style={{ fontSize: '11px', color: '#94a3b8' }}>
                                                             {user.booksCompleted} Books Finished
