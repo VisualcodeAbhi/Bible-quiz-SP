@@ -913,8 +913,27 @@ const Statistics = () => {
                                                     />
 
                                                     <div>
-                                                        <div style={{ fontSize: '13px', fontWeight: '700', color: user.isCurrent ? '#38ef7d' : '#fff' }}>
-                                                            {user.name} {user.isCurrent && '(You)'}
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <span style={{ fontSize: '13px', fontWeight: '700', color: user.isCurrent ? '#38ef7d' : '#fff' }}>
+                                                                {user.name} {user.isCurrent && '(You)'}
+                                                            </span>
+                                                            {user.streak > 0 && (
+                                                                <span style={{
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '2px',
+                                                                    background: 'rgba(255, 152, 0, 0.2)',
+                                                                    border: '1px solid rgba(255, 152, 0, 0.45)',
+                                                                    borderRadius: '8px',
+                                                                    padding: '1px 6px',
+                                                                    fontSize: '10.5px',
+                                                                    fontWeight: '800',
+                                                                    color: '#ffb74d'
+                                                                }} title={`${user.streak} Day Streak`}>
+                                                                    <span>🔥</span>
+                                                                    <span>{user.streak}</span>
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <div style={{ fontSize: '11px', color: '#94a3b8' }}>
                                                             {user.booksCompleted} Books Finished
@@ -922,41 +941,13 @@ const Statistics = () => {
                                                     </div>
                                                 </div>
 
-                                                {/* Right: Streak, Score & Levels for ALL users */}
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                    {/* Streak Badge (Shown for all users) */}
-                                                    <div style={{
-                                                        display: 'flex',
-                                                        flexDirection: 'column',
-                                                        alignItems: 'center',
-                                                        justifyContent: 'center',
-                                                        background: (user.streak > 0) ? 'rgba(255, 152, 0, 0.16)' : 'rgba(255, 255, 255, 0.05)',
-                                                        border: (user.streak > 0) ? '1px solid rgba(255, 152, 0, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
-                                                        borderRadius: '10px',
-                                                        padding: '3px 8px',
-                                                        minWidth: '38px',
-                                                        boxShadow: (user.streak > 0) ? '0 2px 8px rgba(255, 152, 0, 0.2)' : 'none'
-                                                    }} title={`${user.streak || 0} Day Streak`}>
-                                                        <span style={{ fontSize: '13px', lineHeight: 1 }}>🔥</span>
-                                                        <span style={{
-                                                            fontSize: '11px',
-                                                            fontWeight: '800',
-                                                            color: (user.streak > 0) ? '#ffb74d' : '#94a3b8',
-                                                            marginTop: '2px',
-                                                            lineHeight: 1
-                                                        }}>
-                                                            {user.streak || 0}
-                                                        </span>
+                                                {/* Right: Score & Levels */}
+                                                <div style={{ textAlign: 'right' }}>
+                                                    <div style={{ fontSize: '14px', fontWeight: '800', color: '#38ef7d' }}>
+                                                        {user.levelsCompleted} <span style={{ fontSize: '10px', color: '#94a3b8' }}>Levels</span>
                                                     </div>
-
-                                                    {/* Levels & Points */}
-                                                    <div style={{ textAlign: 'right', minWidth: '60px' }}>
-                                                        <div style={{ fontSize: '13px', fontWeight: '800', color: '#38ef7d' }}>
-                                                            {user.levelsCompleted} <span style={{ fontSize: '10px', color: '#94a3b8' }}>Lvl</span>
-                                                        </div>
-                                                        <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: '600' }}>
-                                                            {user.totalScore} pts
-                                                        </div>
+                                                    <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: '600' }}>
+                                                        {user.totalScore} pts
                                                     </div>
                                                 </div>
                                             </div>
