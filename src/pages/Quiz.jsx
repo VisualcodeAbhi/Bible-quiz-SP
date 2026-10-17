@@ -530,26 +530,6 @@ const Quiz = () => {
                                         </>
                                     )}
                                 </div>
-
-                                {/* Audio Sound Toggle */}
-                                <div
-                                    onClick={toggleSound}
-                                    style={{
-                                        background: soundEnabled ? 'rgba(56, 239, 125, 0.25)' : 'rgba(255, 255, 255, 0.15)',
-                                        borderRadius: '20px',
-                                        padding: '8px 10px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        border: soundEnabled ? '1px solid #38ef7d' : '1px solid rgba(255,255,255,0.3)',
-                                        transition: 'all 0.2s ease',
-                                        zIndex: 10
-                                    }}
-                                    title={soundEnabled ? "Mute Game Audio" : "Enable Game Audio"}
-                                >
-                                    <span style={{ fontSize: '15px' }}>{soundEnabled ? '🔊' : '🔇'}</span>
-                                </div>
                             </div>
 
                             <div className="title-container" style={{ textAlign: 'center', width: 'auto', flex: 1, padding: '0 8px' }}>

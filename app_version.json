@@ -1,0 +1,12 @@
+{
+  "latest_version_code": 13,
+  "latest_version_name": "1.2.3",
+  "min_required_version_code": 1,
+  "force_update": false,
+  "release_notes": [
+    "కొత్త ప్రొఫైల్ ఎడిటర్ (Profile photo & 13-char name edit)",
+    "సౌండ్ మరియు వైబ్రేషన్ కంట్రోల్స్ (Independent Sound & Haptic switches)",
+    "మరిన్ని ప్రశ్నలు మరియు వేగవంతమైన పనితీరు (Bug fixes & performance improvements)"
+  ],
+  "store_url": "https://play.google.com/store/apps/details?id=com.telugubiblequiz.app"
+}

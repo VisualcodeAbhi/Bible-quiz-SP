@@ -16,7 +16,7 @@ import {
 const Statistics = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { progress, userName, userPhoto, session } = useGame();
+    const { progress, userName, userPhoto, session, streak } = useGame();
 
     const [activeTab, setActiveTab] = useState(location.state?.tab || 'myStats'); // 'myStats' | 'leaderboard'
     const [bookFilter, setBookFilter] = useState('all'); // 'all' | 'completed' | 'inProgress' | 'notStarted'
@@ -170,6 +170,9 @@ const Statistics = () => {
                         }
                     });
 
+                    const isCurrent = session?.user?.id === row.id;
+                    const uStreak = isCurrent ? Math.max(Number(gd.streak || 0), streak || 0) : Number(gd.streak || 0);
+
                     return {
                         id: row.id,
                         name: uName,
@@ -177,7 +180,8 @@ const Statistics = () => {
                         levelsCompleted: uLevelsCompleted,
                         booksCompleted: uBooksCompleted,
                         totalScore: uScore,
-                        isCurrent: session?.user?.id === row.id
+                        streak: uStreak,
+                        isCurrent
                     };
                 });
 
@@ -795,6 +799,10 @@ const Statistics = () => {
                                             <div style={{ fontSize: '10px', color: '#cbd5e1', fontWeight: 'bold' }}>
                                                 {leaderboardUsers[1]?.levelsCompleted} Levels
                                             </div>
+                                            <div style={{ fontSize: '10.5px', color: '#ffb74d', fontWeight: '800', marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                                                <span>🔥</span>
+                                                <span>{leaderboardUsers[1]?.streak || 0}</span>
+                                            </div>
                                         </div>
 
                                         {/* Rank 1 (Gold) */}
@@ -825,6 +833,10 @@ const Statistics = () => {
                                             <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 'bold' }}>
                                                 {leaderboardUsers[0]?.levelsCompleted} Levels
                                             </div>
+                                            <div style={{ fontSize: '11px', color: '#ffb74d', fontWeight: '800', marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                                                <span>🔥</span>
+                                                <span>{leaderboardUsers[0]?.streak || 0}</span>
+                                            </div>
                                         </div>
 
                                         {/* Rank 3 (Bronze) */}
@@ -852,6 +864,10 @@ const Statistics = () => {
                                             </div>
                                             <div style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 'bold' }}>
                                                 {leaderboardUsers[2]?.levelsCompleted} Levels
+                                            </div>
+                                            <div style={{ fontSize: '10.5px', color: '#ffb74d', fontWeight: '800', marginTop: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '2px' }}>
+                                                <span>🔥</span>
+                                                <span>{leaderboardUsers[2]?.streak || 0}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -897,8 +913,27 @@ const Statistics = () => {
                                                     />
 
                                                     <div>
-                                                        <div style={{ fontSize: '13px', fontWeight: '700', color: user.isCurrent ? '#38ef7d' : '#fff' }}>
-                                                            {user.name} {user.isCurrent && '(You)'}
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <span style={{ fontSize: '13px', fontWeight: '700', color: user.isCurrent ? '#38ef7d' : '#fff' }}>
+                                                                {user.name} {user.isCurrent && '(You)'}
+                                                            </span>
+                                                            {user.streak > 0 && (
+                                                                <span style={{
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '2px',
+                                                                    background: 'rgba(255, 152, 0, 0.2)',
+                                                                    border: '1px solid rgba(255, 152, 0, 0.45)',
+                                                                    borderRadius: '8px',
+                                                                    padding: '1px 6px',
+                                                                    fontSize: '10.5px',
+                                                                    fontWeight: '800',
+                                                                    color: '#ffb74d'
+                                                                }} title={`${user.streak} Day Streak`}>
+                                                                    <span>🔥</span>
+                                                                    <span>{user.streak}</span>
+                                                                </span>
+                                                            )}
                                                         </div>
                                                         <div style={{ fontSize: '11px', color: '#94a3b8' }}>
                                                             {user.booksCompleted} Books Finished

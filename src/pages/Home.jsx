@@ -31,6 +31,8 @@ const Home = () => {
         totallyResetGame, 
         session,
         streak,
+        isStreakFrozen,
+        streakStatus,
         bookmarks,
         toggleBookmark,
         soundEnabled,
@@ -300,20 +302,24 @@ const Home = () => {
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px',
-                            background: 'linear-gradient(135deg, rgba(255, 152, 0, 0.95), rgba(244, 67, 54, 0.95))',
+                            background: isStreakFrozen 
+                                ? 'linear-gradient(135deg, #0284c7, #38bdf8)' 
+                                : 'linear-gradient(135deg, rgba(255, 152, 0, 0.95), rgba(244, 67, 54, 0.95))',
                             color: 'white',
                             padding: '3px 10px',
                             borderRadius: '12px',
                             fontSize: '11px',
                             fontWeight: '700',
-                            boxShadow: '0 2px 6px rgba(244, 67, 54, 0.4)',
+                            boxShadow: isStreakFrozen 
+                                ? '0 0 10px rgba(56, 189, 248, 0.6)' 
+                                : '0 2px 6px rgba(244, 67, 54, 0.4)',
                             cursor: 'pointer',
                             transition: 'transform 0.15s ease'
                         }}
-                        title="Daily Streak Info"
+                        title={isStreakFrozen ? "Streak is Frozen! Play today to save it!" : "Daily Streak Info"}
                     >
-                        <span>🔥</span>
-                        <span>{streak} {streak === 1 ? 'Day' : 'Days'}</span>
+                        <span>{isStreakFrozen ? '🧊' : '🔥'}</span>
+                        <span>{streak} {streak === 1 ? 'Day' : 'Days'}{isStreakFrozen ? ' (Frozen)' : ''}</span>
                     </div>
                 </div>
 
@@ -660,10 +666,23 @@ const Home = () => {
                                     gap: '8px',
                                     marginTop: '12px'
                                 }}>
-                                    <span style={{ fontSize: '32px', lineHeight: 1 }}>🔥</span>
-                                    <span style={{ fontSize: '26px', fontWeight: '800', color: '#1a1a1a', lineHeight: 1 }}>
+                                    <span style={{ fontSize: '32px', lineHeight: 1 }}>{isStreakFrozen ? '🧊' : '🔥'}</span>
+                                    <span style={{ fontSize: '26px', fontWeight: '800', color: isStreakFrozen ? '#0284c7' : '#1a1a1a', lineHeight: 1 }}>
                                         {streak || 0}
                                     </span>
+                                    {isStreakFrozen && (
+                                        <span style={{
+                                            fontSize: '11px',
+                                            fontWeight: '700',
+                                            color: '#0284c7',
+                                            backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                                            padding: '2px 8px',
+                                            borderRadius: '8px',
+                                            border: '1px solid rgba(56, 189, 248, 0.3)'
+                                        }}>
+                                            Frozen (Play today to save!)
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -914,9 +933,6 @@ const Home = () => {
                         <span className="btn-main-text" style={{ color: '#11998e', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             🌱 Beginner
                         </span>
-                        <span className="btn-sub-text" style={{ color: '#444' }}>
-                            ఆరంభ స్థాయి
-                        </span>
                     </button>
 
                     {/* Intermediate Option (Controlled by appSettings.json) */}
@@ -943,9 +959,6 @@ const Home = () => {
                     >
                         <span className="btn-main-text" style={{ color: intermediateEnabled ? '#d97706' : '#333', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             {intermediateEnabled ? '⚡' : '🔒'} Intermediate
-                        </span>
-                        <span className="btn-sub-text" style={{ color: '#666' }}>
-                            మధ్యస్థ స్థాయి
                         </span>
                     </button>
 
@@ -1373,15 +1386,21 @@ const Home = () => {
                         boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
                         border: '1px solid rgba(255, 152, 0, 0.3)'
                     }}>
-                        <div style={{ fontSize: '48px', marginBottom: '10px' }}>🔥</div>
+                        <div style={{ fontSize: '48px', marginBottom: '10px' }}>
+                            {isStreakFrozen ? '🧊' : (streak > 0 ? '🔥' : '🌱')}
+                        </div>
                         <h2 style={{ margin: '0 0 6px 0', fontSize: '22px', fontWeight: '800' }}>
-                            {streak} Day Streak!
+                            {isStreakFrozen ? `${streak} Day Streak Frozen!` : (streak > 0 ? `${streak} Day Streak!` : 'Start Your Streak!')}
                         </h2>
-                        <p style={{ color: '#fdba74', fontSize: '13px', fontWeight: '600', margin: '0 0 16px 0' }}>
-                            ప్రతిరోజూ బైబిల్ జ్ఞానాన్ని పెంచుకోండి
+                        <p style={{ color: isStreakFrozen ? '#38bdf8' : '#fdba74', fontSize: '13px', fontWeight: '600', margin: '0 0 16px 0' }}>
+                            {isStreakFrozen ? 'నిన్న ఆడలేదు - స్ట్రీక్ ఫ్రీజ్ అయ్యింది!' : (streak > 0 ? 'ప్రతిరోజూ బైబిల్ జ్ఞానాన్ని పెంచుకోండి' : 'ఈరోజే మీ డైలీ స్ట్రీక్ ప్రారంభించండి')}
                         </p>
                         <p style={{ color: '#cbd5e1', fontSize: '13px', lineHeight: 1.5, margin: '0 0 24px 0' }}>
-                            Play at least one quiz chapter every day to keep your streak burning and build a strong daily Bible reading habit!
+                            {isStreakFrozen 
+                                ? `You missed yesterday, but your ${streak}-day streak is protected today! Play at least one quiz chapter today to thaw and keep your streak burning before it collapses tomorrow!`
+                                : (streak > 0 
+                                    ? 'Play at least one quiz chapter every day to keep your streak burning and build a strong daily Bible reading habit!' 
+                                    : 'Complete any quiz chapter today to ignite your streak and build an inspiring daily habit!')}
                         </p>
                         <button
                             onClick={() => {
@@ -1389,7 +1408,9 @@ const Home = () => {
                                 setShowStreakModal(false);
                             }}
                             style={{
-                                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                                background: isStreakFrozen
+                                    ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)'
+                                    : 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '14px',
@@ -1398,10 +1419,12 @@ const Home = () => {
                                 fontWeight: '700',
                                 cursor: 'pointer',
                                 width: '100%',
-                                boxShadow: '0 4px 15px rgba(249, 115, 22, 0.4)'
+                                boxShadow: isStreakFrozen 
+                                    ? '0 4px 15px rgba(2, 132, 199, 0.4)' 
+                                    : '0 4px 15px rgba(249, 115, 22, 0.4)'
                             }}
                         >
-                            Keep Playing!
+                            {isStreakFrozen ? 'Play Now to Save Streak!' : 'Keep Playing!'}
                         </button>
                     </div>
                 </div>

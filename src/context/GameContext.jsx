@@ -72,40 +72,97 @@ export const GameProvider = ({ children }) => {
         });
     };
 
-    // Daily Streak state
-    const [streak, setStreak] = useState(() => {
+    // Helper: Local date string (YYYY-MM-DD)
+    const getTodayDateStr = () => {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+
+    // Helper: Days difference between two YYYY-MM-DD date strings
+    const getDaysDiff = (dateStr1, dateStr2) => {
+        if (!dateStr1 || !dateStr2) return 999;
+        const [y1, m1, d1] = dateStr1.split('-').map(Number);
+        const [y2, m2, d2] = dateStr2.split('-').map(Number);
+        if (isNaN(y1) || isNaN(y2)) return 999;
+        const utc1 = Date.UTC(y1, m1 - 1, d1);
+        const utc2 = Date.UTC(y2, m2 - 1, d2);
+        return Math.floor((utc2 - utc1) / (1000 * 60 * 60 * 24));
+    };
+
+    // Daily Streak state with Freeze (Day 2) & Collapse (Day 3+)
+    const [streakData, setStreakData] = useState(() => {
         try {
-            const count = parseInt(localStorage.getItem('bibleQuiz_streak') || '0', 10);
-            return isNaN(count) ? 0 : count;
+            const todayStr = getTodayDateStr();
+            const lastPlay = localStorage.getItem('bibleQuiz_lastPlayDate');
+            const storedCount = parseInt(localStorage.getItem('bibleQuiz_streak') || '0', 10);
+            const count = isNaN(storedCount) ? 0 : storedCount;
+
+            if (!lastPlay || count === 0) {
+                return { streak: 0, status: 'collapsed', isFrozen: false, isPlayedToday: false };
+            }
+
+            const diff = getDaysDiff(lastPlay, todayStr);
+            if (diff === 0) {
+                return { streak: count, status: 'active', isFrozen: false, isPlayedToday: true };
+            } else if (diff === 1) {
+                return { streak: count, status: 'active', isFrozen: false, isPlayedToday: false };
+            } else if (diff === 2) {
+                // User did not play on 2nd day -> FROZEN (streak protected!)
+                return { streak: count, status: 'frozen', isFrozen: true, isPlayedToday: false };
+            } else {
+                // User did not play on 3rd day or more -> COLLAPSE (streak resets)
+                localStorage.setItem('bibleQuiz_streak', '0');
+                return { streak: 0, status: 'collapsed', isFrozen: false, isPlayedToday: false };
+            }
         } catch (e) {
-            return 0;
+            return { streak: 0, status: 'collapsed', isFrozen: false, isPlayedToday: false };
         }
     });
 
+    const streak = streakData.streak;
+    const streakStatus = streakData.status;
+    const isStreakFrozen = streakData.isFrozen;
+    const isPlayedToday = streakData.isPlayedToday;
+
     const recordDailyPlay = () => {
         try {
-            const todayStr = new Date().toISOString().slice(0, 10);
+            const todayStr = getTodayDateStr();
             const lastPlay = localStorage.getItem('bibleQuiz_lastPlayDate');
+            const diff = getDaysDiff(lastPlay, todayStr);
 
-            if (lastPlay === todayStr) {
-                return streak;
+            if (diff === 0 && streakData.streak > 0) {
+                // Already counted today
+                return streakData.streak;
             }
-
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
             let newStreak = 1;
-            if (lastPlay === yesterdayStr) {
-                newStreak = (streak || 0) + 1;
+            if (diff === 1) {
+                // Played yesterday -> advance streak
+                newStreak = (streakData.streak || 0) + 1;
+            } else if (diff === 2) {
+                // Was FROZEN -> Playing today thaws & advances streak!
+                newStreak = (streakData.streak || 0) + 1;
+            } else {
+                // Collapsed / First play -> start fresh at 1
+                newStreak = 1;
             }
 
-            setStreak(newStreak);
+            const nextData = {
+                streak: newStreak,
+                status: 'active',
+                isFrozen: false,
+                isPlayedToday: true
+            };
+
+            setStreakData(nextData);
             localStorage.setItem('bibleQuiz_streak', newStreak.toString());
             localStorage.setItem('bibleQuiz_lastPlayDate', todayStr);
             return newStreak;
         } catch (e) {
-            return streak;
+            return streakData.streak;
         }
     };
 
@@ -141,9 +198,8 @@ export const GameProvider = ({ children }) => {
         localStorage.removeItem('bibleQuizProgress');
         localStorage.removeItem('bibleQuiz_bookmarks');
         localStorage.removeItem('bibleQuiz_streak');
-        localStorage.removeItem('bibleQuiz_lastPlayDate');
         setBookmarks([]);
-        setStreak(0);
+        setStreakData({ streak: 0, status: 'collapsed', isFrozen: false, isPlayedToday: false });
     };
 
     // --- Loading & Initial Sync ---
@@ -315,6 +371,25 @@ export const GameProvider = ({ children }) => {
             if (userInfinite) localStorage.setItem('bibleQuiz_infiniteLivesUntil', userInfinite);
             else localStorage.removeItem('bibleQuiz_infiniteLivesUntil');
 
+            // Restore Cloud Streak
+            if (cloud.streak !== undefined && cloud.lastPlayDate) {
+                const cloudStreak = Number(cloud.streak || 0);
+                const todayStr = getTodayDateStr();
+                const diff = getDaysDiff(cloud.lastPlayDate, todayStr);
+                if (diff <= 1) {
+                    setStreakData({ streak: cloudStreak, status: 'active', isFrozen: false, isPlayedToday: diff === 0 });
+                    localStorage.setItem('bibleQuiz_streak', cloudStreak.toString());
+                    localStorage.setItem('bibleQuiz_lastPlayDate', cloud.lastPlayDate);
+                } else if (diff === 2) {
+                    setStreakData({ streak: cloudStreak, status: 'frozen', isFrozen: true, isPlayedToday: false });
+                    localStorage.setItem('bibleQuiz_streak', cloudStreak.toString());
+                    localStorage.setItem('bibleQuiz_lastPlayDate', cloud.lastPlayDate);
+                } else {
+                    setStreakData({ streak: 0, status: 'collapsed', isFrozen: false, isPlayedToday: false });
+                    localStorage.setItem('bibleQuiz_streak', '0');
+                }
+            }
+
             setIsCloudLoaded(true);
         } catch (err) {
             console.error("Error syncing:", err);
@@ -335,6 +410,9 @@ export const GameProvider = ({ children }) => {
             userPhoto,
             progress,
             infiniteLivesUntil, // Add this field
+            streak: streakData.streak,
+            lastPlayDate: localStorage.getItem('bibleQuiz_lastPlayDate') || null,
+            streakStatus: streakData.status,
             active_session_token: localToken, // Persist the token
             last_updated: Date.now()
         };
@@ -366,7 +444,7 @@ export const GameProvider = ({ children }) => {
             const timeout = setTimeout(saveToCloud, 1000); // Reduced to 1s
             return () => clearTimeout(timeout);
         }
-    }, [lives, nextRestoreTime, userName, userPhoto, nameLocked, hints, infiniteLivesUntil, progress, session, isCloudLoaded]);
+    }, [lives, nextRestoreTime, userName, userPhoto, nameLocked, hints, infiniteLivesUntil, progress, streakData.streak, session, isCloudLoaded]);
 
     // Force Save on App Background
     useEffect(() => {
@@ -634,6 +712,9 @@ export const GameProvider = ({ children }) => {
         toggleBookmark,
         isBookmarked,
         streak,
+        streakStatus,
+        isStreakFrozen,
+        isPlayedToday,
         recordDailyPlay
     };
 

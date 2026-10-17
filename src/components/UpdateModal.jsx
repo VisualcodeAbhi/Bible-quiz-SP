@@ -15,6 +15,7 @@ const UpdateModal = ({ updateData, onClose }) => {
             height: '100vh',
             backgroundColor: 'rgba(0, 5, 20, 0.85)',
             backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -26,7 +27,7 @@ const UpdateModal = ({ updateData, onClose }) => {
                 background: 'linear-gradient(145deg, #131d36, #0a1022)',
                 border: '1px solid rgba(255, 215, 0, 0.35)',
                 borderRadius: '24px',
-                padding: '30px 24px',
+                padding: '28px 22px',
                 maxWidth: '380px',
                 width: '100%',
                 textAlign: 'center',
@@ -37,31 +38,39 @@ const UpdateModal = ({ updateData, onClose }) => {
             }}>
                 {/* Rocket Icon / Play Store Badge */}
                 <div style={{
-                    width: '74px',
-                    height: '74px',
-                    margin: '0 auto 16px auto',
+                    width: '72px',
+                    height: '72px',
+                    margin: '0 auto 14px auto',
                     borderRadius: '50%',
                     background: 'linear-gradient(135deg, #ffb703, #fb8500)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 8px 24px rgba(251, 133, 0, 0.4)',
-                    fontSize: '36px'
+                    boxShadow: '0 8px 24px rgba(251, 133, 0, 0.45)',
+                    fontSize: '34px'
                 }}>
                     🚀
                 </div>
 
                 <h2 style={{
-                    margin: '0 0 6px 0',
-                    fontSize: '22px',
+                    margin: '0 0 4px 0',
+                    fontSize: '20px',
                     fontWeight: '800',
                     background: 'linear-gradient(90deg, #ffd700, #ffb703)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
-                    letterSpacing: '0.5px'
+                    letterSpacing: '0.3px'
+                }}>
+                    కొత్త అప్‌డేట్ వచ్చింది!
+                </h2>
+                <div style={{
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    color: '#94a3b8',
+                    marginBottom: '10px'
                 }}>
                     New Update Available!
-                </h2>
+                </div>
 
                 <div style={{
                     display: 'inline-block',
@@ -69,45 +78,22 @@ const UpdateModal = ({ updateData, onClose }) => {
                     borderRadius: '20px',
                     backgroundColor: 'rgba(255, 215, 0, 0.15)',
                     color: '#ffd700',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    marginBottom: '16px',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    marginBottom: '14px',
                     border: '1px solid rgba(255, 215, 0, 0.3)'
                 }}>
                     Version {latestVersion} is live on Google Play
                 </div>
 
                 <p style={{
-                    fontSize: '14px',
+                    fontSize: '13px',
                     color: '#cbd5e1',
                     lineHeight: '1.5',
-                    margin: '0 0 16px 0'
+                    margin: '0 0 20px 0'
                 }}>
-                    A newer, improved version of <b>Telugu Bible Quiz</b> is available with new features and enhancements.
+                    మెరుగైన అనుభవం మరియు కొత్త ఫీచర్ల కోసం దయచేసి యాప్‌ను అప్‌డేట్ చేయండి.
                 </p>
-
-                {/* Release Notes */}
-                {notes && notes.length > 0 && (
-                    <div style={{
-                        textAlign: 'left',
-                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '12px',
-                        padding: '12px 16px',
-                        marginBottom: '22px',
-                        fontSize: '13px',
-                        color: '#94a3b8'
-                    }}>
-                        <div style={{ color: '#f8fafc', fontWeight: '600', marginBottom: '6px' }}>
-                            What's New:
-                        </div>
-                        <ul style={{ margin: 0, paddingLeft: '18px', lineHeight: '1.6' }}>
-                            {notes.map((note, index) => (
-                                <li key={index}>{note}</li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
 
                 {/* Action Buttons */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -121,7 +107,7 @@ const UpdateModal = ({ updateData, onClose }) => {
                             border: 'none',
                             color: '#ffffff',
                             fontWeight: '700',
-                            fontSize: '16px',
+                            fontSize: '15px',
                             cursor: 'pointer',
                             boxShadow: '0 6px 20px rgba(6, 214, 160, 0.35)',
                             transition: 'transform 0.15s ease',
@@ -131,7 +117,7 @@ const UpdateModal = ({ updateData, onClose }) => {
                             gap: '8px'
                         }}
                     >
-                        <span>Update Now</span>
+                        <span>ఇప్పుడే అప్‌డేట్ చేయండి (Update Now)</span>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M5 20h14v-2H5v2zM19 9h-4V3H9v6H5l7 7 7-7z"/>
                         </svg>
@@ -142,18 +128,18 @@ const UpdateModal = ({ updateData, onClose }) => {
                             onClick={onClose}
                             style={{
                                 width: '100%',
-                                padding: '12px',
+                                padding: '11px',
                                 borderRadius: '14px',
                                 background: 'transparent',
                                 border: '1px solid rgba(255, 255, 255, 0.15)',
                                 color: '#94a3b8',
                                 fontWeight: '600',
-                                fontSize: '14px',
+                                fontSize: '13px',
                                 cursor: 'pointer',
                                 transition: 'background 0.2s'
                             }}
                         >
-                            Remind Me Later
+                            తర్వాత చేస్తాను (Remind Me Later)
                         </button>
                     )}
                 </div>

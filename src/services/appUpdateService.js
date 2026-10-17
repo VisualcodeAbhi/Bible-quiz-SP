@@ -1,50 +1,114 @@
 import { supabase } from '../lib/supabaseClient';
 
-export const CURRENT_VERSION_CODE = 12;
-export const CURRENT_VERSION_NAME = "1.2.1";
+export const CURRENT_VERSION_CODE = 13;
+export const CURRENT_VERSION_NAME = "1.2.3";
 export const PLAY_STORE_PACKAGE = "com.telugubiblequiz.app";
 export const PLAY_STORE_URL = `https://play.google.com/store/apps/details?id=${PLAY_STORE_PACKAGE}`;
 export const PLAY_STORE_MARKET_URI = `market://details?id=${PLAY_STORE_PACKAGE}`;
 
+const REMOTE_GITHUB_CONFIG_URL = `https://raw.githubusercontent.com/VisualcodeAbhi/Bible-quiz-SP/main/app_version.json`;
+
 /**
- * Checks for updates against Supabase or remote config.
+ * Checks for updates against GitHub Raw config and Supabase app_config.
+ * Merges both sources and checks if a newer version is available.
  */
 export const checkForAppUpdate = async () => {
+    let latestCode = 0;
+    let minCode = 0;
+    let latestName = CURRENT_VERSION_NAME;
+    let isForced = false;
+    let releaseNotes = [];
+    let storeUrl = PLAY_STORE_URL;
+
+    // 1. Fetch remote version from GitHub Raw repository
     try {
-        // 1. Attempt to fetch app version configuration from Supabase table 'app_config'
-        const { data, error } = await supabase
+        const ghResponse = await fetch(`${REMOTE_GITHUB_CONFIG_URL}?_t=${Date.now()}`, {
+            cache: 'no-store'
+        });
+        if (ghResponse.ok) {
+            const ghData = await ghResponse.json();
+            if (ghData && ghData.latest_version_code) {
+                const code = Number(ghData.latest_version_code);
+                if (code > latestCode) {
+                    latestCode = code;
+                    latestName = ghData.latest_version_name || latestName;
+                    minCode = Number(ghData.min_required_version_code || 0);
+                    isForced = Boolean(ghData.force_update);
+                    if (Array.isArray(ghData.release_notes) && ghData.release_notes.length > 0) {
+                        releaseNotes = ghData.release_notes;
+                    }
+                    if (ghData.store_url) {
+                        storeUrl = ghData.store_url;
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        // Quiet fail - will proceed with Supabase or fallback
+    }
+
+    // 2. Fetch app version configuration from Supabase table 'app_config'
+    try {
+        const { data: sbData, error: sbError } = await supabase
             .from('app_config')
             .select('*')
             .eq('id', 'android_version')
             .maybeSingle();
 
-        if (data && !error) {
-            const latestCode = Number(data.latest_version_code || 1);
-            const minCode = Number(data.min_required_version_code || 1);
-            const latestName = data.latest_version_name || "1.0.1";
-            const isForced = CURRENT_VERSION_CODE < minCode || Boolean(data.force_update);
-            const updateAvailable = latestCode > CURRENT_VERSION_CODE;
-
-            if (updateAvailable) {
-                return {
-                    updateAvailable: true,
-                    isForced,
-                    latestVersion: latestName,
-                    notes: Array.isArray(data.release_notes) 
-                        ? data.release_notes 
-                        : [data.release_notes || "New chapters, enhanced performance, and bug fixes!"],
-                    url: data.store_url || PLAY_STORE_URL
-                };
+        if (sbData && !sbError) {
+            const code = Number(sbData.latest_version_code || 0);
+            if (code > latestCode) {
+                latestCode = code;
+                latestName = sbData.latest_version_name || latestName;
+                minCode = Number(sbData.min_required_version_code || 0);
+                isForced = Boolean(sbData.force_update);
+                if (Array.isArray(sbData.release_notes) && sbData.release_notes.length > 0) {
+                    releaseNotes = sbData.release_notes;
+                } else if (typeof sbData.release_notes === 'string') {
+                    releaseNotes = [sbData.release_notes];
+                }
+                if (sbData.store_url) {
+                    storeUrl = sbData.store_url;
+                }
             }
         }
     } catch (e) {
-        console.warn("Update check error:", e);
+        // Quiet fail
+    }
+
+    // Default release notes if none provided
+    if (releaseNotes.length === 0) {
+        releaseNotes = [
+            "కొత్త ప్రొఫైల్ సెట్టింగ్‌లు (Profile photo & 13-char name edit)",
+            "సౌండ్ మరియు వైబ్రేషన్ కంట్రోల్స్ (Independent Sound & Haptics)",
+            "మరిన్ని ప్రశ్నలు మరియు వేగవంతమైన పనితీరు (Bug fixes & performance improvements)"
+        ];
+    }
+
+    // Compare against current running version
+    const updateAvailable = latestCode > CURRENT_VERSION_CODE;
+    const forceRequired = CURRENT_VERSION_CODE < minCode || isForced;
+
+    if (updateAvailable) {
+        return {
+            updateAvailable: true,
+            isForced: forceRequired,
+            latestVersion: latestName,
+            latestCode,
+            currentVersion: CURRENT_VERSION_NAME,
+            currentCode: CURRENT_VERSION_CODE,
+            notes: releaseNotes,
+            url: storeUrl
+        };
     }
 
     return {
         updateAvailable: false,
         isForced: false,
         latestVersion: CURRENT_VERSION_NAME,
+        latestCode: CURRENT_VERSION_CODE,
+        currentVersion: CURRENT_VERSION_NAME,
+        currentCode: CURRENT_VERSION_CODE,
         notes: [],
         url: PLAY_STORE_URL
     };
@@ -54,15 +118,24 @@ export const checkForAppUpdate = async () => {
  * Launches the Google Play Store directly on the user's Android phone.
  */
 export const openPlayStore = (customUrl) => {
+    const playUrl = customUrl || PLAY_STORE_URL;
     try {
         // Try opening native Google Play Store app first via market:// scheme
         window.location.href = PLAY_STORE_MARKET_URI;
         
-        // Fallback to web Play Store URL if market:// takes too long
+        // Fallback to web Play Store URL if market intent takes time
         setTimeout(() => {
-            window.open(customUrl || PLAY_STORE_URL, '_blank');
-        }, 800);
+            try {
+                window.open(playUrl, '_system');
+            } catch (err) {
+                window.open(playUrl, '_blank');
+            }
+        }, 600);
     } catch (e) {
-        window.open(customUrl || PLAY_STORE_URL, '_blank');
+        try {
+            window.open(playUrl, '_system');
+        } catch (err) {
+            window.open(playUrl, '_blank');
+        }
     }
 };
