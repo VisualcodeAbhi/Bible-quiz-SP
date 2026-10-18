@@ -57,72 +57,69 @@ class SoundEngine {
         return this.vibrateEnabled;
     }
 
-    // --- Global Click & Tap Haptics Listener for All Clicks ---
+    // --- Global Click & Tap Haptics & Sound Listener for Button Clicks ---
     initGlobalClickHaptics() {
         if (typeof window === 'undefined' || typeof document === 'undefined') return;
         if (this._globalHapticsInitialized) return;
         this._globalHapticsInitialized = true;
 
+        // Auto-unlock Web Audio on first user gesture
+        const unlockAudio = () => {
+            this.init();
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(() => {});
+            }
+        };
+        document.addEventListener('pointerdown', unlockAudio, { capture: true, once: true, passive: true });
+        document.addEventListener('touchstart', unlockAudio, { capture: true, once: true, passive: true });
+        document.addEventListener('click', unlockAudio, { capture: true, once: true, passive: true });
+
         let lastFeedbackTime = 0;
 
-        const handleInteraction = (e) => {
-            if (!this.vibrateEnabled) return;
-            const now = Date.now();
-            if (now - lastFeedbackTime < 75) return; // Prevent double trigger on rapid touch/click
+        const isButtonTarget = (target) => {
+            if (!target) return false;
 
-            const target = e.target;
-            if (!target) return;
+            // 1. Native HTML buttons, links, or button inputs
+            const nativeBtn = target.closest('button, a, input[type="button"], input[type="submit"], input[type="reset"]');
+            if (nativeBtn) return true;
 
-            // Traverse up to find if clicked element or any parent is interactive
+            // 2. ARIA roles for buttons, tabs, switches
+            const roleBtn = target.closest('[role="button"], [role="tab"], [role="switch"]');
+            if (roleBtn) return true;
+
+            // 3. Classes representing buttons and interactive action cards
+            const classBtn = target.closest(
+                '.btn, .action-btn, .option-btn, .level-btn, .nav-btn, .close-btn, .back-btn, ' +
+                '.tab-btn, .toggle-switch, .menu-icon, .book-link, .box, .pill-badge'
+            );
+            if (classBtn) return true;
+
+            // 4. Element specifically has class containing 'btn' or 'button'
             let el = target;
-            let isClickable = false;
             let depth = 0;
-
-            while (el && el !== document.body && depth < 6) {
-                const tag = el.tagName;
-                if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') {
-                    isClickable = true;
-                    break;
+            while (el && el !== document.body && depth < 4) {
+                const cls = typeof el.className === 'string' ? el.className.toLowerCase() : '';
+                if (cls.includes('btn') || cls.includes('button')) {
+                    return true;
                 }
-                if (el.getAttribute) {
-                    const role = el.getAttribute('role');
-                    if (role === 'button' || role === 'tab' || role === 'checkbox' || role === 'switch' || role === 'link') {
-                        isClickable = true;
-                        break;
-                    }
-                    if (el.getAttribute('data-clickable') !== null || el.getAttribute('tabindex') !== null) {
-                        isClickable = true;
-                        break;
-                    }
-                }
-                if (el.onclick || (el.style && el.style.cursor === 'pointer')) {
-                    isClickable = true;
-                    break;
-                }
-                const className = typeof el.className === 'string' ? el.className.toLowerCase() : '';
-                if (className.includes('btn') || className.includes('card') || className.includes('option') || 
-                    className.includes('item') || className.includes('pill') || className.includes('tab') ||
-                    className.includes('close') || className.includes('icon') || className.includes('badge') ||
-                    className.includes('toggle') || className.includes('podium') || className.includes('level') ||
-                    className.includes('clickable')) {
-                    isClickable = true;
-                    break;
-                }
-                try {
-                    const comp = window.getComputedStyle(el);
-                    if (comp && comp.cursor === 'pointer') {
-                        isClickable = true;
-                        break;
-                    }
-                } catch (err) {}
-
                 el = el.parentElement;
                 depth++;
             }
 
-            if (isClickable) {
+            return false;
+        };
+
+        const handleInteraction = (e) => {
+            if (!this.vibrateEnabled && !this.soundEnabled) return;
+            const now = Date.now();
+            if (now - lastFeedbackTime < 70) return; // Prevent double trigger on rapid touch/click
+
+            const target = e.target;
+            if (!target) return;
+
+            if (isButtonTarget(target)) {
                 lastFeedbackTime = now;
-                this.vibrate('light');
+                this.playClick(); // Triggers BOTH sound AND haptic vibration for button clicks!
             }
         };
 
@@ -212,22 +209,25 @@ class SoundEngine {
         this.init();
         if (!this.ctx) return;
         try {
+            if (this.ctx.state === 'suspended') {
+                this.ctx.resume().catch(() => {});
+            }
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             const now = this.ctx.currentTime;
 
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(450, now);
-            osc.frequency.exponentialRampToValueAtTime(150, now + 0.05);
+            osc.frequency.setValueAtTime(500, now);
+            osc.frequency.exponentialRampToValueAtTime(160, now + 0.06);
 
-            gain.gain.setValueAtTime(0.15, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+            gain.gain.setValueAtTime(0.30, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
 
             osc.connect(gain);
             gain.connect(this.ctx.destination);
 
             osc.start(now);
-            osc.stop(now + 0.05);
+            osc.stop(now + 0.06);
         } catch (e) {}
     }
 
