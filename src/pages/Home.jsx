@@ -306,7 +306,6 @@ const Home = () => {
                     {/* Streak Badge Pill */}
                     <div 
                         onClick={() => {
-                            soundService.playClick();
                             setShowStreakModal(true);
                         }}
                         style={{
@@ -375,7 +374,7 @@ const Home = () => {
                     )}
 
                     {/* Store Cart Icon */}
-                    <div onClick={() => { soundService.playClick(); navigate('/store'); }} style={{
+                    <div onClick={() => { navigate('/store'); }} style={{
                         marginTop: '8px',
                         cursor: 'pointer',
                         background: 'rgba(255, 255, 255, 0.2)',
@@ -394,7 +393,7 @@ const Home = () => {
                     </div>
 
                     {/* Statistics Icon */}
-                    <div onClick={() => { soundService.playClick(); navigate('/statistics'); }} style={{
+                    <div onClick={() => { navigate('/statistics'); }} style={{
                         marginTop: '8px',
                         cursor: 'pointer',
                         background: 'rgba(255, 255, 255, 0.2)',
@@ -1033,7 +1032,6 @@ const Home = () => {
                     {/* Leaderboard Card */}
                     <div 
                         onClick={() => {
-                            soundService.playClick();
                             navigate('/statistics', { state: { tab: 'leaderboard' } });
                         }}
                         style={{
@@ -1061,7 +1059,6 @@ const Home = () => {
                     {/* Saved Questions (Bookmarks) Card */}
                     <div 
                         onClick={() => {
-                            soundService.playClick();
                             setShowBookmarksModal(true);
                         }}
                         style={{
@@ -1363,7 +1360,6 @@ const Home = () => {
                                             ) : (
                                                 <button
                                                     onClick={() => {
-                                                        soundService.playClick();
                                                         setRevealedBookmarkAnswers(prev => ({ ...prev, [idx]: true }));
                                                     }}
                                                     style={{
@@ -1435,7 +1431,6 @@ const Home = () => {
                         </p>
                         <button
                             onClick={() => {
-                                soundService.playClick();
                                 setShowStreakModal(false);
                             }}
                             style={{

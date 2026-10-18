@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Confetti from 'react-confetti';
+import { App as CapacitorApp } from '@capacitor/app';
 import { bookNameMap } from '../bookNames';
 import Loader from '../components/Loader';
 import { useGame } from '../context/GameContext';
@@ -83,6 +84,7 @@ const Quiz = () => {
     const [timer, setTimer] = useState(30);
     const [quizFinished, setQuizFinished] = useState(false);
     const [quizFailedLives, setQuizFailedLives] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
 
     // Feedback State
     const [showFeedback, setShowFeedback] = useState(false);
@@ -97,13 +99,47 @@ const Quiz = () => {
     // Modal State
     const [showAdFailModal, setShowAdFailModal] = useState(false);
 
-    // Load Data
+    // Pause Quiz when App enters background / recent apps
+    useEffect(() => {
+        let appStateHandle = null;
+
+        const handlePause = () => {
+            if (!quizFinished && !quizFailedLives && !loading) {
+                if (timerRef.current) clearTimeout(timerRef.current);
+                setIsPaused(true);
+            }
+        };
+
+        const onVisibilityChange = () => {
+            if (document.hidden) {
+                handlePause();
+            }
+        };
+
+        document.addEventListener('visibilitychange', onVisibilityChange);
+
+        CapacitorApp.addListener('appStateChange', (state) => {
+            if (!state.isActive) {
+                handlePause();
+            }
+        }).then(h => {
+            appStateHandle = h;
+        }).catch(() => {});
+
+        return () => {
+            document.removeEventListener('visibilitychange', onVisibilityChange);
+            if (appStateHandle && appStateHandle.remove) {
+                appStateHandle.remove();
+            }
+        };
+    }, [quizFinished, quizFailedLives, loading]);
+
+    // Load Data (Instant loading without artificial delay)
     useEffect(() => {
         // Preload Interstitial Ad in background
         AdMobService.prepareInterstitial().catch(() => {});
 
         const loadData = async () => {
-            const minDelay = new Promise(resolve => setTimeout(resolve, 800));
             // Reset state
             setQuizFinished(false);
             setQuizFailedLives(false);
@@ -115,16 +151,18 @@ const Quiz = () => {
             setIsCorrect(null);
             setShowFeedback(false);
             setDisabledOptions([]);
+            setIsPaused(false);
 
             try {
-                const [data] = await Promise.all([
-                    loadQuizBookData(bookFile, difficulty),
-                    minDelay
-                ]);
+                // If book data is already loaded in memory for this book, use it directly (0ms)
+                let data = bookData;
+                const targetBookName = bookNameMap[bookFile]?.name || bookFile;
+                if (!data || data.bookName !== targetBookName || !data.levels?.[level]) {
+                    data = await loadQuizBookData(bookFile, difficulty);
+                    setBookData(data);
+                }
 
-                setBookData(data);
-
-                const levelQuestions = data.levels?.[level];
+                const levelQuestions = data?.levels?.[level];
                 if (levelQuestions) {
                     setQuestions(shuffleQuestionsAndOptions(levelQuestions));
                 } else {
@@ -144,9 +182,9 @@ const Quiz = () => {
         setDisabledOptions([]);
     }, [currentQuestionIndex]);
 
-    // Timer Logic
+    // Timer Logic (strictly paused when app is in background/recent apps)
     useEffect(() => {
-        if (loading || quizFinished || quizFailedLives || selectedOption !== null) return;
+        if (loading || quizFinished || quizFailedLives || selectedOption !== null || isPaused) return;
 
         if (lives <= 0 && !quizFailedLives) {
             // Logic handled in render check
@@ -161,17 +199,17 @@ const Quiz = () => {
             handleOptionClick(-1);
         }
         return () => clearTimeout(timerRef.current);
-    }, [timer, loading, quizFinished, quizFailedLives, selectedOption]);
+    }, [timer, loading, quizFinished, quizFailedLives, selectedOption, isPaused]);
 
     const handleOptionClick = (index) => {
-        if (selectedOption !== null) return;
+        if (selectedOption !== null || isPaused) return;
         if (timerRef.current) clearTimeout(timerRef.current);
 
         setSelectedOption(index);
         const currentQuestion = questions[currentQuestionIndex];
         const correct = index === currentQuestion?.correct;
 
-        soundService.playClick();
+        // Feedback: play only answer sound/haptic (no duplicate tap vibration)
         if (correct) {
             soundService.playCorrect();
         } else {
@@ -688,6 +726,97 @@ const Quiz = () => {
                 }}
                 onCancel={() => setShowAdFailModal(false)}
             />
+
+            {/* Quiz Paused Modal Overlay (When returning from background/recents) */}
+            {isPaused && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'rgba(10, 15, 30, 0.88)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    zIndex: 9999,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '24px',
+                    textAlign: 'center'
+                }}>
+                    <div style={{
+                        background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98))',
+                        border: '1.5px solid rgba(255, 255, 255, 0.15)',
+                        borderRadius: '24px',
+                        padding: '30px 24px',
+                        maxWidth: '330px',
+                        width: '100%',
+                        boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center'
+                    }}>
+                        <div style={{ fontSize: '46px', marginBottom: '8px' }}>⏸️</div>
+                        <h2 style={{ color: '#fff', fontSize: '22px', fontWeight: '800', margin: '0 0 6px 0' }}>
+                            Quiz Paused
+                        </h2>
+                        <p style={{ color: '#94a3b8', fontSize: '13px', margin: '0 0 16px 0', lineHeight: 1.4 }}>
+                            App was in background. Your timer & lives are protected!
+                        </p>
+                        <div style={{
+                            display: 'flex',
+                            gap: '12px',
+                            background: 'rgba(255,255,255,0.06)',
+                            padding: '10px 18px',
+                            borderRadius: '14px',
+                            marginBottom: '20px',
+                            fontSize: '13px',
+                            color: '#e2e8f0',
+                            fontWeight: '700'
+                        }}>
+                            <span>⏱️ {timer}s Left</span>
+                            <span>•</span>
+                            <span>❤️ {lives} Lives</span>
+                        </div>
+                        <button
+                            onClick={() => setIsPaused(false)}
+                            style={{
+                                width: '100%',
+                                padding: '13px',
+                                background: 'linear-gradient(135deg, #11998e, #38ef7d)',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '12px',
+                                fontSize: '16px',
+                                fontWeight: '800',
+                                cursor: 'pointer',
+                                boxShadow: '0 6px 20px rgba(56, 239, 125, 0.35)',
+                                marginBottom: '10px'
+                            }}
+                        >
+                            ▶ Resume Quiz
+                        </button>
+                        <button
+                            onClick={() => navigate('/')}
+                            style={{
+                                width: '100%',
+                                padding: '10px',
+                                background: 'rgba(255, 255, 255, 0.08)',
+                                color: '#cbd5e1',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                borderRadius: '12px',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            🏠 Exit to Home
+                        </button>
+                    </div>
+                </div>
+            )}
         </div >
     );
 };

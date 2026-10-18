@@ -9,7 +9,22 @@ class SoundEngine {
         this.soundEnabled = localStorage.getItem('bibleQuiz_soundEnabled') !== 'false';
         this.vibrateEnabled = localStorage.getItem('bibleQuiz_vibrateEnabled') !== 'false';
         this._globalHapticsInitialized = false;
+        this._lastLightVibrateTime = 0;
         this.initGlobalClickHaptics();
+        this.initBackgroundAudioSuspension();
+    }
+
+    initBackgroundAudioSuspension() {
+        if (typeof window === 'undefined') return;
+        import('@capacitor/app').then(({ App }) => {
+            App.addListener('appStateChange', (state) => {
+                if (!state.isActive) {
+                    if (this.ctx && this.ctx.state === 'running') {
+                        this.ctx.suspend().catch(() => {});
+                    }
+                }
+            });
+        }).catch(() => {});
     }
 
     init() {
@@ -75,6 +90,7 @@ class SoundEngine {
         document.addEventListener('click', unlockAudio, { capture: true, once: true, passive: true });
 
         let lastFeedbackTime = 0;
+        let lastPointerDownTime = 0;
 
         const isButtonTarget = (target) => {
             if (!target) return false;
@@ -112,14 +128,25 @@ class SoundEngine {
         const handleInteraction = (e) => {
             if (!this.vibrateEnabled) return;
             const now = Date.now();
-            if (now - lastFeedbackTime < 70) return; // Prevent double trigger on rapid touch/click
+
+            // On mobile touch, pointerdown fires first, followed by click 80-150ms later.
+            // Suppress duplicate click event if pointerdown already handled it!
+            if (e.type === 'click' && (now - lastPointerDownTime < 450)) {
+                return;
+            }
+
+            if (e.type === 'pointerdown') {
+                lastPointerDownTime = now;
+            }
+
+            if (now - lastFeedbackTime < 250) return; // Prevent double trigger
 
             const target = e.target;
             if (!target) return;
 
             if (isButtonTarget(target)) {
                 lastFeedbackTime = now;
-                this.vibrate('light'); // Tactile haptic vibration for button clicks (tap sound removed)
+                this.vibrate('light');
             }
         };
 
@@ -131,71 +158,69 @@ class SoundEngine {
     // --- Haptic Vibrations (Native Capacitor Haptics + Web fallback) ---
     async vibrate(type = 'light') {
         if (!this.vibrateEnabled) return;
+
+        // Hard lock: Light haptics cannot trigger more than once per 250ms
+        const now = Date.now();
+        if (type === 'light') {
+            if (now - this._lastLightVibrateTime < 250) {
+                return;
+            }
+            this._lastLightVibrateTime = now;
+        }
+
         try {
             if (type === 'light') {
                 try {
                     await Haptics.impact({ style: ImpactStyle.Light });
+                    return; // Native succeeded: DO NOT fall through to navigator.vibrate!
                 } catch (e) {
-                    await Haptics.vibrate({ duration: 25 }).catch(() => {});
+                    await Haptics.vibrate({ duration: 25 });
+                    return;
                 }
-                if (typeof navigator !== 'undefined' && navigator.vibrate) {
-                    navigator.vibrate(25);
-                }
-                return;
             } else if (type === 'medium') {
                 try {
                     await Haptics.impact({ style: ImpactStyle.Medium });
+                    return; // Native succeeded
                 } catch (e) {
-                    await Haptics.vibrate({ duration: 45 }).catch(() => {});
+                    await Haptics.vibrate({ duration: 45 });
+                    return;
                 }
-                if (typeof navigator !== 'undefined' && navigator.vibrate) {
-                    navigator.vibrate(45);
-                }
-                return;
             } else if (type === 'heavy') {
                 try {
                     await Haptics.impact({ style: ImpactStyle.Heavy });
+                    return; // Native succeeded
                 } catch (e) {
-                    await Haptics.vibrate({ duration: 70 }).catch(() => {});
+                    await Haptics.vibrate({ duration: 70 });
+                    return;
                 }
-                if (typeof navigator !== 'undefined' && navigator.vibrate) {
-                    navigator.vibrate(70);
-                }
-                return;
             } else if (type === 'success') {
                 try {
                     await Haptics.notification({ type: NotificationType.Success });
+                    return; // Native succeeded
                 } catch (e) {
-                    await Haptics.vibrate({ duration: 60 }).catch(() => {});
+                    await Haptics.vibrate({ duration: 60 });
+                    return;
                 }
-                if (typeof navigator !== 'undefined' && navigator.vibrate) {
-                    navigator.vibrate([40, 60, 40]);
-                }
-                return;
             } else if (type === 'error') {
                 try {
                     await Haptics.notification({ type: NotificationType.Error });
+                    return; // Native succeeded
                 } catch (e) {
-                    await Haptics.vibrate({ duration: 90 }).catch(() => {});
+                    await Haptics.vibrate({ duration: 90 });
+                    return;
                 }
-                if (typeof navigator !== 'undefined' && navigator.vibrate) {
-                    navigator.vibrate([60, 50, 60]);
-                }
-                return;
             } else if (typeof type === 'number') {
-                await Haptics.vibrate({ duration: type }).catch(() => {});
-                if (typeof navigator !== 'undefined' && navigator.vibrate) {
-                    navigator.vibrate(type);
-                }
+                await Haptics.vibrate({ duration: type });
                 return;
             }
         } catch (e) {
             // Capacitor Haptics plugin unavailable (e.g. standard browser)
         }
 
+        // Web Browser Fallback ONLY if native plugin is unavailable
         try {
             if (typeof navigator !== 'undefined' && navigator.vibrate) {
-                const pattern = Array.isArray(type) ? type : (typeof type === 'number' ? type : 30);
+                const pattern = Array.isArray(type) ? type : (typeof type === 'number' ? type : 25);
                 navigator.vibrate(pattern);
             }
         } catch (e) {}
