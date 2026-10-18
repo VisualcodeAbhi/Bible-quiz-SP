@@ -110,7 +110,7 @@ class SoundEngine {
         };
 
         const handleInteraction = (e) => {
-            if (!this.vibrateEnabled && !this.soundEnabled) return;
+            if (!this.vibrateEnabled) return;
             const now = Date.now();
             if (now - lastFeedbackTime < 70) return; // Prevent double trigger on rapid touch/click
 
@@ -119,7 +119,7 @@ class SoundEngine {
 
             if (isButtonTarget(target)) {
                 lastFeedbackTime = now;
-                this.playClick(); // Triggers BOTH sound AND haptic vibration for button clicks!
+                this.vibrate('light'); // Tactile haptic vibration for button clicks (tap sound removed)
             }
         };
 
@@ -201,34 +201,9 @@ class SoundEngine {
         } catch (e) {}
     }
 
-    // --- Sound Synthesizers ---
-    // 1. Soft click on tapping option/button
+    // 1. Button tap/click tactile feedback (tap sound removed per user request)
     playClick() {
         this.vibrate('light');
-        if (!this.soundEnabled) return;
-        this.init();
-        if (!this.ctx) return;
-        try {
-            if (this.ctx.state === 'suspended') {
-                this.ctx.resume().catch(() => {});
-            }
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            const now = this.ctx.currentTime;
-
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(500, now);
-            osc.frequency.exponentialRampToValueAtTime(160, now + 0.06);
-
-            gain.gain.setValueAtTime(0.30, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-
-            osc.connect(gain);
-            gain.connect(this.ctx.destination);
-
-            osc.start(now);
-            osc.stop(now + 0.06);
-        } catch (e) {}
     }
 
     // 2. Harmonious joyful chime on Correct answer

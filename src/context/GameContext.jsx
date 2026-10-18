@@ -160,6 +160,41 @@ export const GameProvider = ({ children }) => {
             setStreakData(nextData);
             localStorage.setItem('bibleQuiz_streak', newStreak.toString());
             localStorage.setItem('bibleQuiz_lastPlayDate', todayStr);
+
+            // Immediately store streak on Supabase
+            (async () => {
+                try {
+                    const currentUserId = session?.user?.id || (await supabase.auth.getSession()).data?.session?.user?.id;
+                    if (!currentUserId) return;
+
+                    const localToken = localStorage.getItem('bibleQuiz_sessionToken');
+                    const { data } = await supabase
+                        .from('profiles')
+                        .select('game_data')
+                        .eq('id', currentUserId)
+                        .maybeSingle();
+
+                    const existing = data?.game_data || {};
+                    const updatedGameData = {
+                        ...existing,
+                        streak: newStreak,
+                        lastPlayDate: todayStr,
+                        streakStatus: 'active',
+                        active_session_token: localToken || existing.active_session_token,
+                        last_updated: Date.now()
+                    };
+
+                    await supabase.from('profiles').upsert({
+                        id: currentUserId,
+                        game_data: updatedGameData,
+                        updated_at: new Date()
+                    });
+                    console.log("Streak stored on Supabase successfully:", newStreak);
+                } catch (err) {
+                    console.error("Error storing streak on Supabase:", err);
+                }
+            })();
+
             return newStreak;
         } catch (e) {
             return streakData.streak;
@@ -371,23 +406,80 @@ export const GameProvider = ({ children }) => {
             if (userInfinite) localStorage.setItem('bibleQuiz_infiniteLivesUntil', userInfinite);
             else localStorage.removeItem('bibleQuiz_infiniteLivesUntil');
 
-            // Restore Cloud Streak
+            // Restore Cloud Streak & Reconcile with Local Streak
+            const localStoredStreak = parseInt(localStorage.getItem('bibleQuiz_streak') || '0', 10);
+            const localLastPlay = localStorage.getItem('bibleQuiz_lastPlayDate');
+            const todayStr = getTodayDateStr();
+
+            let finalStreak = 0;
+            let finalStatus = 'collapsed';
+            let finalFrozen = false;
+            let finalPlayedToday = false;
+            let finalLastPlay = null;
+
             if (cloud.streak !== undefined && cloud.lastPlayDate) {
                 const cloudStreak = Number(cloud.streak || 0);
-                const todayStr = getTodayDateStr();
                 const diff = getDaysDiff(cloud.lastPlayDate, todayStr);
                 if (diff <= 1) {
-                    setStreakData({ streak: cloudStreak, status: 'active', isFrozen: false, isPlayedToday: diff === 0 });
-                    localStorage.setItem('bibleQuiz_streak', cloudStreak.toString());
-                    localStorage.setItem('bibleQuiz_lastPlayDate', cloud.lastPlayDate);
+                    finalStreak = cloudStreak;
+                    finalStatus = 'active';
+                    finalFrozen = false;
+                    finalPlayedToday = diff === 0;
+                    finalLastPlay = cloud.lastPlayDate;
                 } else if (diff === 2) {
-                    setStreakData({ streak: cloudStreak, status: 'frozen', isFrozen: true, isPlayedToday: false });
-                    localStorage.setItem('bibleQuiz_streak', cloudStreak.toString());
-                    localStorage.setItem('bibleQuiz_lastPlayDate', cloud.lastPlayDate);
+                    finalStreak = cloudStreak;
+                    finalStatus = 'frozen';
+                    finalFrozen = true;
+                    finalPlayedToday = false;
+                    finalLastPlay = cloud.lastPlayDate;
                 } else {
-                    setStreakData({ streak: 0, status: 'collapsed', isFrozen: false, isPlayedToday: false });
-                    localStorage.setItem('bibleQuiz_streak', '0');
+                    finalStreak = 0;
+                    finalStatus = 'collapsed';
+                    finalFrozen = false;
+                    finalPlayedToday = false;
+                    finalLastPlay = null;
                 }
+            }
+
+            // If local streak was active and higher (or cloud had no streak yet), preserve local streak!
+            if (localStoredStreak > 0 && localLastPlay) {
+                const localDiff = getDaysDiff(localLastPlay, todayStr);
+                if (localDiff <= 2 && localStoredStreak >= finalStreak) {
+                    finalStreak = localStoredStreak;
+                    finalStatus = localDiff === 2 ? 'frozen' : 'active';
+                    finalFrozen = localDiff === 2;
+                    finalPlayedToday = localDiff === 0;
+                    finalLastPlay = localLastPlay;
+                }
+            }
+
+            setStreakData({
+                streak: finalStreak,
+                status: finalStatus,
+                isFrozen: finalFrozen,
+                isPlayedToday: finalPlayedToday
+            });
+            localStorage.setItem('bibleQuiz_streak', finalStreak.toString());
+            if (finalLastPlay) {
+                localStorage.setItem('bibleQuiz_lastPlayDate', finalLastPlay);
+            } else {
+                localStorage.removeItem('bibleQuiz_lastPlayDate');
+            }
+
+            // If cloud streak was missing or outdated, update cloud immediately!
+            if (cloud.streak === undefined || Number(cloud.streak || 0) < finalStreak) {
+                supabase.from('profiles').update({
+                    game_data: {
+                        ...newGameData,
+                        streak: finalStreak,
+                        lastPlayDate: finalLastPlay,
+                        streakStatus: finalStatus,
+                        last_updated: Date.now()
+                    },
+                    updated_at: new Date()
+                }).eq('id', userId).then(() => {
+                    console.log("Streaks stored and synchronized to Supabase!");
+                }).catch(e => console.error("Streak sync error:", e));
             }
 
             setIsCloudLoaded(true);
@@ -401,6 +493,8 @@ export const GameProvider = ({ children }) => {
         if (!session || !isCloudLoaded) return;
 
         const localToken = localStorage.getItem('bibleQuiz_sessionToken');
+        const currentStreakCount = parseInt(localStorage.getItem('bibleQuiz_streak') || '0', 10);
+        const currentLastPlay = localStorage.getItem('bibleQuiz_lastPlayDate') || null;
 
         const gameData = {
             lives,
@@ -410,9 +504,9 @@ export const GameProvider = ({ children }) => {
             userPhoto,
             progress,
             infiniteLivesUntil, // Add this field
-            streak: streakData.streak,
-            lastPlayDate: localStorage.getItem('bibleQuiz_lastPlayDate') || null,
-            streakStatus: streakData.status,
+            streak: !isNaN(currentStreakCount) && currentStreakCount > 0 ? currentStreakCount : (streakData.streak || 0),
+            lastPlayDate: currentLastPlay,
+            streakStatus: streakData.status || 'active',
             active_session_token: localToken, // Persist the token
             last_updated: Date.now()
         };

@@ -81,6 +81,8 @@ const Home = () => {
     const [editName, setEditName] = React.useState("");
     const [editPhoto, setEditPhoto] = React.useState(null);
     const [isEditingNameInline, setIsEditingNameInline] = React.useState(false);
+    const [isPhotoSaving, setIsPhotoSaving] = React.useState(false);
+    const [photoSaved, setPhotoSaved] = React.useState(false);
 
     const handleSaveInlineName = async () => {
         if (editName && editName.trim()) {
@@ -146,6 +148,7 @@ const Home = () => {
     const handlePhotoChange = async (e) => {
         const file = e.target.files[0];
         if (file) {
+            setPhotoSaved(false);
             try {
                 const compressed = await compressAvatar(file, 160, 0.75);
                 if (compressed) {
@@ -165,10 +168,16 @@ const Home = () => {
     };
 
     const savePhoto = async () => {
-        if (editPhoto) {
+        if (!editPhoto || isPhotoSaving) return;
+        setIsPhotoSaving(true);
+        try {
             await updateProfile(null, editPhoto);
+            setPhotoSaved(true);
+        } catch (err) {
+            console.error("Error saving photo:", err);
+        } finally {
+            setIsPhotoSaving(false);
         }
-        setIsEditingPhoto(false);
     };
 
     const openNameEdit = () => {
@@ -179,6 +188,8 @@ const Home = () => {
     const openPhotoEdit = () => {
         setEditPhoto(userPhoto);
         setEditName(userName || '');
+        setPhotoSaved(false);
+        setIsPhotoSaving(false);
         setIsEditingNameInline(false);
         setIsEditingPhoto(true);
     };
@@ -452,6 +463,8 @@ const Home = () => {
                         <button
                             onClick={() => {
                                 setEditPhoto(userPhoto);
+                                setPhotoSaved(false);
+                                setIsPhotoSaving(false);
                                 setIsEditingNameInline(false);
                                 setIsEditingPhoto(false);
                             }}
@@ -687,25 +700,43 @@ const Home = () => {
                             </div>
                         </div>
 
-                        {/* Save Photo Button (Shown when user has selected a new photo) */}
-                        {editPhoto && editPhoto !== userPhoto && (
+                        {/* Save Photo Button (Shown when user has selected a new photo or just saved) */}
+                        {(photoSaved || (editPhoto && editPhoto !== userPhoto)) && (
                             <button
-                                onClick={savePhoto}
+                                onClick={photoSaved || isPhotoSaving ? undefined : savePhoto}
+                                disabled={isPhotoSaving || photoSaved}
                                 style={{
                                     width: '100%',
-                                    padding: '10px',
-                                    background: 'linear-gradient(135deg, #11998e, #38ef7d)',
+                                    padding: '11px',
+                                    background: photoSaved 
+                                        ? 'linear-gradient(135deg, #10b981, #059669)'
+                                        : isPhotoSaving 
+                                        ? '#94a3b8' 
+                                        : 'linear-gradient(135deg, #11998e, #38ef7d)',
                                     color: 'white',
                                     border: 'none',
                                     borderRadius: '10px',
                                     fontSize: '15px',
                                     fontWeight: 'bold',
                                     marginBottom: '16px',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(56, 239, 125, 0.35)'
+                                    cursor: photoSaved ? 'default' : (isPhotoSaving ? 'wait' : 'pointer'),
+                                    boxShadow: photoSaved 
+                                        ? '0 4px 12px rgba(16, 185, 129, 0.4)'
+                                        : '0 4px 12px rgba(56, 239, 125, 0.35)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '8px',
+                                    transition: 'all 0.3s ease'
                                 }}
                             >
-                                💾 Save New Photo
+                                {isPhotoSaving ? (
+                                    <span>⏳ Saving...</span>
+                                ) : photoSaved ? (
+                                    <span>✓ Saved</span>
+                                ) : (
+                                    <span>💾 Save New Photo</span>
+                                )}
                             </button>
                         )}
 
