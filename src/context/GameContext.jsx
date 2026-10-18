@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import ConfirmModal from '../components/ConfirmModal';
-import { compressAvatar } from '../lib/imageCompressor';
+import { compressAvatar, dataUrlToBlob } from '../lib/imageCompressor';
 import { soundService } from '../services/soundService';
 
 const GameContext = createContext();
@@ -357,11 +357,12 @@ export const GameProvider = ({ children }) => {
                 ? cloud.userName 
                 : (storedLocalName && storedLocalName !== "Guest" ? storedLocalName : defaultName);
             let userPhoto = cloud.userPhoto || googlePhoto || localStorage.getItem('bibleQuiz_userPhoto') || null;
-            if (userPhoto && typeof userPhoto === 'string' && userPhoto.startsWith('data:image') && userPhoto.length > 20000) {
+            if (userPhoto && typeof userPhoto === 'string' && userPhoto.startsWith('data:image') && userPhoto.length > 3500) {
                 try {
-                    const compressed = await compressAvatar(userPhoto, 160, 0.75);
+                    const compressed = await compressAvatar(userPhoto, 96, 0.6);
                     if (compressed && compressed.length < userPhoto.length) {
                         userPhoto = compressed;
+                        localStorage.setItem('bibleQuiz_userPhoto', compressed);
                         // Auto-shrink existing bloated database row in background
                         if (activeSession?.user?.id) {
                             supabase.from('profiles').update({
@@ -372,7 +373,7 @@ export const GameProvider = ({ children }) => {
                                 },
                                 updated_at: new Date()
                             }).eq('id', activeSession.user.id).then(() => {
-                                console.log("Auto-shrunk bloated cloud avatar in database!");
+                                console.log("Auto-shrunk bloated cloud avatar in database to", compressed.length, "bytes!");
                             });
                         }
                     }
@@ -648,10 +649,37 @@ export const GameProvider = ({ children }) => {
             localStorage.setItem('bibleQuiz_userName', updatedName);
         }
         if (photo) {
-            const compressedPhoto = await compressAvatar(photo, 160, 0.75);
-            updatedPhoto = compressedPhoto;
-            setUserPhoto(compressedPhoto);
-            if (compressedPhoto) localStorage.setItem('bibleQuiz_userPhoto', compressedPhoto);
+            const compressedPhoto = await compressAvatar(photo, 96, 0.6);
+            let finalPhoto = compressedPhoto;
+
+            // Attempt upload to Supabase Storage 'avatars' bucket if configured
+            if (session?.user?.id && compressedPhoto && compressedPhoto.startsWith('data:image')) {
+                try {
+                    const blob = dataUrlToBlob(compressedPhoto);
+                    if (blob) {
+                        const filePath = `${session.user.id}.jpg`;
+                        const { error: uploadError } = await supabase.storage
+                            .from('avatars')
+                            .upload(filePath, blob, {
+                                contentType: 'image/jpeg',
+                                upsert: true
+                            });
+
+                        if (!uploadError) {
+                            const { data: pubData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+                            if (pubData?.publicUrl) {
+                                finalPhoto = `${pubData.publicUrl}?t=${Date.now()}`;
+                            }
+                        }
+                    }
+                } catch (storageErr) {
+                    console.log("Storage bucket upload skipped, keeping compact data URL:", storageErr);
+                }
+            }
+
+            updatedPhoto = finalPhoto;
+            setUserPhoto(finalPhoto);
+            if (finalPhoto) localStorage.setItem('bibleQuiz_userPhoto', finalPhoto);
             else localStorage.removeItem('bibleQuiz_userPhoto');
         }
 

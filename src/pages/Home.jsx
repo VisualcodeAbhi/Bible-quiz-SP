@@ -150,7 +150,7 @@ const Home = () => {
         if (file) {
             setPhotoSaved(false);
             try {
-                const compressed = await compressAvatar(file, 160, 0.75);
+                const compressed = await compressAvatar(file, 96, 0.6);
                 if (compressed) {
                     setEditPhoto(compressed);
                 }
