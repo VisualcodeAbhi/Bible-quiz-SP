@@ -1,28 +1,40 @@
 import React from 'react';
-import { openPlayStore } from '../services/appUpdateService';
+import { openPlayStore, dismissUpdatePrompt } from '../services/appUpdateService';
 
 const UpdateModal = ({ updateData, onClose }) => {
     if (!updateData || !updateData.updateAvailable) return null;
 
     const { latestVersion, isForced, notes, url } = updateData;
 
+    const handleRemindLater = () => {
+        dismissUpdatePrompt(latestVersion);
+        if (onClose) onClose();
+    };
+
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            backgroundColor: 'rgba(0, 5, 20, 0.85)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 99999,
-            padding: '20px',
-            boxSizing: 'border-box'
-        }}>
+        <div 
+            onClick={(e) => {
+                if (!isForced && e.target === e.currentTarget) {
+                    handleRemindLater();
+                }
+            }}
+            style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                width: '100vw',
+                height: '100vh',
+                backgroundColor: 'rgba(0, 5, 20, 0.85)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 99999,
+                padding: '20px',
+                boxSizing: 'border-box'
+            }}
+        >
             <div style={{
                 background: 'linear-gradient(145deg, #131d36, #0a1022)',
                 border: '1px solid rgba(255, 215, 0, 0.35)',
@@ -125,7 +137,7 @@ const UpdateModal = ({ updateData, onClose }) => {
 
                     {!isForced && (
                         <button
-                            onClick={onClose}
+                            onClick={handleRemindLater}
                             style={{
                                 width: '100%',
                                 padding: '11px',

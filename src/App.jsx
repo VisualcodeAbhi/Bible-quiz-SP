@@ -30,6 +30,7 @@ function AppContent() {
     const [checkingSession, setCheckingSession] = React.useState(true);
     const [updateData, setUpdateData] = React.useState(null);
     const initialCheckDoneRef = useRef(false);
+    const updateCheckDoneRef = useRef(false);
 
     // Deep link processor helper
     const processAuthUrl = async (url) => {
@@ -90,12 +91,15 @@ function AppContent() {
 
     // 1. Initial Session Check, App Update Check & AdMob Init
     useEffect(() => {
-        // Check for Google Play Store updates
-        checkForAppUpdate().then((info) => {
-            if (info && info.updateAvailable) {
-                setUpdateData(info);
-            }
-        });
+        // Check for Google Play Store updates ONCE on app launch
+        if (!updateCheckDoneRef.current) {
+            updateCheckDoneRef.current = true;
+            checkForAppUpdate().then((info) => {
+                if (info && info.updateAvailable) {
+                    setUpdateData(info);
+                }
+            });
+        }
 
         // Initialize AdMob
         const initAdMob = async () => {

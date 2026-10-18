@@ -292,8 +292,8 @@ const Quiz = () => {
         const passed = (finalScore / questions.length) >= 0.5;
         if (passed) {
             soundService.playFanfare();
+            recordDailyPlay(); // Streak increases ONLY on WIN
         }
-        recordDailyPlay();
         saveProgress(finalScore, passed);
     };
 
@@ -354,7 +354,7 @@ const Quiz = () => {
                         </p>
                     </div>
 
-                    {streak > 0 && (
+                    {passed && streak > 0 && (
                         <div style={{
                             display: 'inline-flex',
                             alignItems: 'center',

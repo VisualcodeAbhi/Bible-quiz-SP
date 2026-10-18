@@ -8,6 +8,31 @@ export const PLAY_STORE_MARKET_URI = `market://details?id=${PLAY_STORE_PACKAGE}`
 
 const REMOTE_GITHUB_CONFIG_URL = `https://raw.githubusercontent.com/VisualcodeAbhi/Bible-quiz-SP/main/app_version.json`;
 
+const DISMISS_KEY_VER = 'bibleQuiz_dismissed_update_version';
+const DISMISS_KEY_TIME = 'bibleQuiz_dismissed_update_time';
+const DISMISS_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours snooze
+
+/**
+ * Snoozes update popup when user clicks "Remind Me Later" for 24 hours
+ */
+export const dismissUpdatePrompt = (versionName) => {
+    try {
+        localStorage.setItem(DISMISS_KEY_VER, String(versionName || ''));
+        localStorage.setItem(DISMISS_KEY_TIME, Date.now().toString());
+    } catch (e) {}
+};
+
+export const isUpdateDismissed = (versionName) => {
+    try {
+        const savedVer = localStorage.getItem(DISMISS_KEY_VER);
+        const savedTime = parseInt(localStorage.getItem(DISMISS_KEY_TIME) || '0', 10);
+        if (savedVer === String(versionName) && (Date.now() - savedTime < DISMISS_DURATION_MS)) {
+            return true;
+        }
+    } catch (e) {}
+    return false;
+};
+
 /**
  * Checks for updates against GitHub Raw config and Supabase app_config.
  * Merges both sources and checks if a newer version is available.
@@ -88,6 +113,22 @@ export const checkForAppUpdate = async () => {
     // Compare against current running version
     const updateAvailable = latestCode > CURRENT_VERSION_CODE;
     const forceRequired = CURRENT_VERSION_CODE < minCode || isForced;
+
+    // Check if user clicked "Remind Me Later" for this version in last 24h
+    if (updateAvailable && !forceRequired && isUpdateDismissed(latestName)) {
+        return {
+            updateAvailable: false,
+            isDismissed: true
+        };
+    }
+
+    // Check if user clicked "Remind Me Later" for this version in last 24h
+    if (updateAvailable && !forceRequired && isUpdateDismissed(latestName)) {
+        return {
+            updateAvailable: false,
+            isDismissed: true
+        };
+    }
 
     if (updateAvailable) {
         return {
