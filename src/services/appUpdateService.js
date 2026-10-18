@@ -104,9 +104,10 @@ export const checkForAppUpdate = async () => {
     // Default release notes if none provided
     if (releaseNotes.length === 0) {
         releaseNotes = [
-            "కొత్త ప్రొఫైల్ సెట్టింగ్‌లు (Profile photo & 13-char name edit)",
-            "సౌండ్ మరియు వైబ్రేషన్ కంట్రోల్స్ (Independent Sound & Haptics)",
-            "మరిన్ని ప్రశ్నలు మరియు వేగవంతమైన పనితీరు (Bug fixes & performance improvements)"
+            "డైలీ స్ట్రీక్స్ & లీడర్‌బోర్డ్ స్ట్రీక్ ప్రదర్శన (Daily Streaks & Leaderboard Streaks for all users)",
+            "కొత్త ప్రొఫైల్ ఎడిటర్ (Profile photo & 13-char name edit)",
+            "క్విజ్ ఆటో-పాజ్ & వేగవంతమైన లోడింగ్ (Instant question loading & Background pause protection)",
+            "సౌండ్ మరియు వైబ్రేషన్ మెరుగుదలలు (Smooth haptics & Bug fixes)"
         ];
     }
 
