@@ -145,9 +145,18 @@ const Statistics = () => {
             if (error) throw error;
 
             if (data && Array.isArray(data)) {
-                const parsedUsers = data.map(row => {
-                    const gd = row.game_data || {};
-                    const uProg = gd.progress || {};
+                const parsedUsers = data
+                    .filter(row => {
+                        const gd = row.game_data || {};
+                        // Hide personal/admin accounts marked as hidden in Supabase
+                        if (gd.hidden === true || gd.is_hidden === true || gd.hide_from_leaderboard === true) {
+                            return false;
+                        }
+                        return true;
+                    })
+                    .map(row => {
+                        const gd = row.game_data || {};
+                        const uProg = gd.progress || {};
                     const uName = gd.userName || "Player";
                     const uPhoto = gd.userPhoto || null;
 

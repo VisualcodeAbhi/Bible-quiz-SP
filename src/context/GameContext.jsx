@@ -267,6 +267,7 @@ export const GameProvider = ({ children }) => {
     const isApplyingCloudUpdateRef = React.useRef(false);
     const lastClientSaveTokenRef = React.useRef(null);
     const saveToCloudRef = React.useRef(null);
+    const isHiddenAccountRef = React.useRef(false);
 
     // --- Helper: Apply Cloud State to React & LocalStorage safely without loops ---
     const applyCloudState = (rawCloudData) => {
@@ -281,6 +282,10 @@ export const GameProvider = ({ children }) => {
                 return;
             }
         }
+
+        // Retain hidden account flag if configured in Supabase
+        if (cloudData.hidden !== undefined) isHiddenAccountRef.current = !!cloudData.hidden;
+        if (cloudData.is_hidden !== undefined) isHiddenAccountRef.current = !!cloudData.is_hidden;
 
         // Lock to prevent auto-save writebacks from echoing this cloud state
         isApplyingCloudUpdateRef.current = true;
@@ -439,6 +444,8 @@ export const GameProvider = ({ children }) => {
             }
             const userProgress = cloud.progress || {};
             const userInfinite = (cloud.infiniteLivesUntil && parseInt(cloud.infiniteLivesUntil, 10) > Date.now()) ? parseInt(cloud.infiniteLivesUntil, 10) : null;
+            if (cloud.hidden !== undefined) isHiddenAccountRef.current = !!cloud.hidden;
+            if (cloud.is_hidden !== undefined) isHiddenAccountRef.current = !!cloud.is_hidden;
             // 5. Update React State
             isApplyingCloudUpdateRef.current = true;
             setLives(userLives);
@@ -693,6 +700,7 @@ export const GameProvider = ({ children }) => {
             active_session_token: localToken,
             last_updated: now,
             client_save_token: saveToken,
+            ...(isHiddenAccountRef.current ? { hidden: true } : {}),
             ...customOverrides
         };
 
