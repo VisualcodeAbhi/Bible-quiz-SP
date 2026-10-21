@@ -68,6 +68,9 @@ export const GameProvider = ({ children }) => {
                 ];
             }
             localStorage.setItem('bibleQuiz_bookmarks', JSON.stringify(updated));
+            if (saveToCloudRef.current) {
+                saveToCloudRef.current({ bookmarks: updated });
+            }
             return updated;
         });
     };
@@ -162,38 +165,11 @@ export const GameProvider = ({ children }) => {
             localStorage.setItem('bibleQuiz_lastPlayDate', todayStr);
 
             // Immediately store streak on Supabase
-            (async () => {
-                try {
-                    const currentUserId = session?.user?.id || (await supabase.auth.getSession()).data?.session?.user?.id;
-                    if (!currentUserId) return;
-
-                    const localToken = localStorage.getItem('bibleQuiz_sessionToken');
-                    const { data } = await supabase
-                        .from('profiles')
-                        .select('game_data')
-                        .eq('id', currentUserId)
-                        .maybeSingle();
-
-                    const existing = data?.game_data || {};
-                    const updatedGameData = {
-                        ...existing,
-                        streak: newStreak,
-                        lastPlayDate: todayStr,
-                        streakStatus: 'active',
-                        active_session_token: localToken || existing.active_session_token,
-                        last_updated: Date.now()
-                    };
-
-                    await supabase.from('profiles').upsert({
-                        id: currentUserId,
-                        game_data: updatedGameData,
-                        updated_at: new Date()
-                    });
-                    console.log("Streak stored on Supabase successfully:", newStreak);
-                } catch (err) {
-                    console.error("Error storing streak on Supabase:", err);
-                }
-            })();
+            saveToCloud({
+                streak: newStreak,
+                lastPlayDate: todayStr,
+                streakStatus: 'active'
+            });
 
             return newStreak;
         } catch (e) {
@@ -287,40 +263,121 @@ export const GameProvider = ({ children }) => {
         return () => subscription.unsubscribe();
     }, []);
 
-    // --- Realtime Session Check (Single Device Enforcement) - Commented out for now ---
-    /*
-    useEffect(() => {
-        if (!session?.user?.id) return;
+    // --- Realtime & Cloud Synchronization Refs ---
+    const isApplyingCloudUpdateRef = React.useRef(false);
+    const lastClientSaveTokenRef = React.useRef(null);
+    const saveToCloudRef = React.useRef(null);
 
-        const channel = supabase
-            .channel('session_check_' + session.user.id)
-            .on(
-                'postgres_changes',
-                {
-                    event: 'UPDATE',
-                    schema: 'public',
-                    table: 'profiles',
-                    filter: `id=eq.${session.user.id}`
-                },
-                (payload) => {
-                    const newGameData = payload.new?.game_data;
-                    const localToken = localStorage.getItem('bibleQuiz_sessionToken');
-                    if (newGameData && newGameData.active_session_token && localToken && newGameData.active_session_token !== localToken) {
-                        // Immediately wipe local data and notify user
-                        clearAllLocalStateAndStorage();
-                        setShowLogoutModal(true);
-                    }
+    // --- Helper: Apply Cloud State to React & LocalStorage safely without loops ---
+    const applyCloudState = (rawCloudData) => {
+        if (!rawCloudData) return;
+
+        let cloudData = rawCloudData;
+        if (typeof rawCloudData === 'string') {
+            try {
+                cloudData = JSON.parse(rawCloudData);
+            } catch (e) {
+                console.error("Failed to parse cloudData string:", e);
+                return;
+            }
+        }
+
+        // Lock to prevent auto-save writebacks from echoing this cloud state
+        isApplyingCloudUpdateRef.current = true;
+
+        if (cloudData.lives !== undefined) {
+            const l = Math.min(Math.max(0, Number(cloudData.lives)), MAX_LIVES);
+            setLives(l);
+            localStorage.setItem('bibleQuiz_lives', l.toString());
+        }
+        if (cloudData.nextRestoreTime !== undefined) {
+            setNextRestoreTime(cloudData.nextRestoreTime);
+            if (cloudData.nextRestoreTime) localStorage.setItem('bibleQuiz_restoreTime', cloudData.nextRestoreTime.toString());
+            else localStorage.removeItem('bibleQuiz_restoreTime');
+        }
+        if (cloudData.hints !== undefined) {
+            const h = Math.max(0, Number(cloudData.hints));
+            setHints(h);
+            localStorage.setItem('bibleQuiz_hints', h.toString());
+        }
+        if (cloudData.userName !== undefined && cloudData.userName !== null) {
+            const nameStr = String(cloudData.userName).trim().slice(0, 13);
+            if (nameStr) {
+                setUserName(nameStr);
+                localStorage.setItem('bibleQuiz_userName', nameStr);
+            }
+        }
+        if (cloudData.userPhoto !== undefined) {
+            setUserPhoto(cloudData.userPhoto);
+            if (cloudData.userPhoto) localStorage.setItem('bibleQuiz_userPhoto', cloudData.userPhoto);
+            else localStorage.removeItem('bibleQuiz_userPhoto');
+        }
+        if (cloudData.progress && typeof cloudData.progress === 'object') {
+            setProgress(cloudData.progress);
+            localStorage.setItem('bibleQuizProgress', JSON.stringify(cloudData.progress));
+        }
+        if (cloudData.infiniteLivesUntil !== undefined) {
+            const inf = cloudData.infiniteLivesUntil ? Number(cloudData.infiniteLivesUntil) : null;
+            if (inf && inf > Date.now()) {
+                setInfiniteLivesUntil(inf);
+                localStorage.setItem('bibleQuiz_infiniteLivesUntil', inf.toString());
+            } else {
+                setInfiniteLivesUntil(null);
+                localStorage.removeItem('bibleQuiz_infiniteLivesUntil');
+            }
+        }
+        if (cloudData.bookmarks && Array.isArray(cloudData.bookmarks)) {
+            setBookmarks(cloudData.bookmarks);
+            localStorage.setItem('bibleQuiz_bookmarks', JSON.stringify(cloudData.bookmarks));
+        }
+
+        // Streak reconciliation
+        if (cloudData.streak !== undefined) {
+            const cloudStreak = Math.max(0, Number(cloudData.streak || 0));
+            const todayStr = getTodayDateStr();
+            const lastPlay = cloudData.lastPlayDate;
+            let status = cloudData.streakStatus || 'active';
+            let isFrozen = status === 'frozen';
+            let isPlayedToday = false;
+
+            if (lastPlay) {
+                const diff = getDaysDiff(lastPlay, todayStr);
+                if (diff === 0) {
+                    status = 'active';
+                    isFrozen = false;
+                    isPlayedToday = true;
+                } else if (diff === 1) {
+                    status = 'active';
+                    isFrozen = false;
+                    isPlayedToday = false;
+                } else if (diff === 2) {
+                    status = 'frozen';
+                    isFrozen = true;
+                    isPlayedToday = false;
+                } else {
+                    status = 'collapsed';
+                    isFrozen = false;
+                    isPlayedToday = false;
                 }
-            )
-            .subscribe();
+            }
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [session?.user?.id]);
-    */
+            setStreakData({
+                streak: cloudStreak,
+                status,
+                isFrozen,
+                isPlayedToday
+            });
+            localStorage.setItem('bibleQuiz_streak', cloudStreak.toString());
+            if (lastPlay) localStorage.setItem('bibleQuiz_lastPlayDate', lastPlay);
+            else localStorage.removeItem('bibleQuiz_lastPlayDate');
+        }
 
-    // --- Helper: State Sync strictly from Cloud Profile ---
+        setTimeout(() => {
+            isApplyingCloudUpdateRef.current = false;
+        }, 1200);
+    };
+
+    // --- Helper: State Sync strictly from Cloud Profile on initial launch ---
     const syncFullState = async (userId, currentAuthSession = null) => {
         try {
             const activeSession = currentAuthSession || session;
@@ -363,7 +420,6 @@ export const GameProvider = ({ children }) => {
                     if (compressed && compressed.length < userPhoto.length) {
                         userPhoto = compressed;
                         localStorage.setItem('bibleQuiz_userPhoto', compressed);
-                        // Auto-shrink existing bloated database row in background
                         if (activeSession?.user?.id) {
                             supabase.from('profiles').update({
                                 game_data: {
@@ -383,8 +439,8 @@ export const GameProvider = ({ children }) => {
             }
             const userProgress = cloud.progress || {};
             const userInfinite = (cloud.infiniteLivesUntil && parseInt(cloud.infiniteLivesUntil, 10) > Date.now()) ? parseInt(cloud.infiniteLivesUntil, 10) : null;
-
             // 5. Update React State
+            isApplyingCloudUpdateRef.current = true;
             setLives(userLives);
             setNextRestoreTime(userRestoreTime);
             setHints(userHints);
@@ -393,19 +449,21 @@ export const GameProvider = ({ children }) => {
             setNameLocked(false);
             setProgress(userProgress);
             setInfiniteLivesUntil(userInfinite);
+            setBookmarks(userBookmarks);
 
             // 6. Update LocalStorage strictly with this user's data
-            localStorage.setItem('bibleQuiz_lives', userLives);
-            if (userRestoreTime) localStorage.setItem('bibleQuiz_restoreTime', userRestoreTime);
+            localStorage.setItem('bibleQuiz_lives', userLives.toString());
+            if (userRestoreTime) localStorage.setItem('bibleQuiz_restoreTime', userRestoreTime.toString());
             else localStorage.removeItem('bibleQuiz_restoreTime');
             localStorage.setItem('bibleQuiz_userName', userProfileName);
             if (userPhoto) localStorage.setItem('bibleQuiz_userPhoto', userPhoto);
             else localStorage.removeItem('bibleQuiz_userPhoto');
             localStorage.setItem('bibleQuiz_nameLocked', 'false');
-            localStorage.setItem('bibleQuiz_hints', userHints);
+            localStorage.setItem('bibleQuiz_hints', userHints.toString());
             localStorage.setItem('bibleQuizProgress', JSON.stringify(userProgress));
-            if (userInfinite) localStorage.setItem('bibleQuiz_infiniteLivesUntil', userInfinite);
+            if (userInfinite) localStorage.setItem('bibleQuiz_infiniteLivesUntil', userInfinite.toString());
             else localStorage.removeItem('bibleQuiz_infiniteLivesUntil');
+            localStorage.setItem('bibleQuiz_bookmarks', JSON.stringify(userBookmarks));
 
             // Restore Cloud Streak & Reconcile with Local Streak
             const localStoredStreak = parseInt(localStorage.getItem('bibleQuiz_streak') || '0', 10);
@@ -442,7 +500,7 @@ export const GameProvider = ({ children }) => {
                 }
             }
 
-            // If local streak was active and higher (or cloud had no streak yet), preserve local streak!
+            // If local streak was active and higher, preserve local streak
             if (localStoredStreak > 0 && localLastPlay) {
                 const localDiff = getDaysDiff(localLastPlay, todayStr);
                 if (localDiff <= 2 && localStoredStreak >= finalStreak) {
@@ -484,14 +542,137 @@ export const GameProvider = ({ children }) => {
             }
 
             setIsCloudLoaded(true);
+            setTimeout(() => {
+                isApplyingCloudUpdateRef.current = false;
+            }, 1200);
         } catch (err) {
             console.error("Error syncing:", err);
+            isApplyingCloudUpdateRef.current = false;
         }
     };
 
+    // --- Realtime Two-Way Sync from Supabase ---
+    useEffect(() => {
+        if (!session?.user?.id) return;
+
+        const channel = supabase
+            .channel('profile_realtime_sync_' + session.user.id)
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'profiles',
+                    filter: `id=eq.${session.user.id}`
+                },
+                (payload) => {
+                    let rawData = payload.new?.game_data;
+                    if (typeof rawData === 'string') {
+                        try {
+                            rawData = JSON.parse(rawData);
+                        } catch (e) {
+                            console.error("Failed to parse game_data string:", e);
+                        }
+                    }
+
+                    const newGameData = {
+                        ...(rawData && typeof rawData === 'object' ? rawData : {}),
+                        ...(payload.new?.userName !== undefined ? { userName: payload.new.userName } : {}),
+                        ...(payload.new?.lives !== undefined ? { lives: payload.new.lives } : {}),
+                        ...(payload.new?.hints !== undefined ? { hints: payload.new.hints } : {}),
+                        ...(payload.new?.streak !== undefined ? { streak: payload.new.streak } : {})
+                    };
+
+                    if (!newGameData || Object.keys(newGameData).length === 0) return;
+
+                    // If this payload has the token of our own local save in flight, ignore the echo
+                    if (lastClientSaveTokenRef.current && newGameData.client_save_token === lastClientSaveTokenRef.current) {
+                        lastClientSaveTokenRef.current = null;
+                        return;
+                    }
+
+                    console.log("⚡ Realtime profile update received from Supabase:", newGameData);
+                    applyCloudState(newGameData);
+                }
+            )
+            .subscribe((status, err) => {
+                if (err) console.warn("Supabase Realtime subscription error:", err);
+                else console.log("Realtime profile sync channel status:", status);
+            });
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, [session?.user?.id]);
+
+    // --- Refetch from Cloud on App Resume / Foreground ---
+    const refetchFromCloud = async () => {
+        if (!session?.user?.id) return;
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('game_data')
+                .eq('id', session.user.id)
+                .maybeSingle();
+
+            if (!error && data?.game_data) {
+                let rawData = data.game_data;
+                if (typeof rawData === 'string') {
+                    try { rawData = JSON.parse(rawData); } catch (e) {}
+                }
+                console.log("🔄 Synced data from Supabase on foreground resume:", rawData);
+                applyCloudState(rawData);
+            }
+        } catch (e) {
+            console.warn("Foreground sync error:", e);
+        }
+    };
+
+    useEffect(() => {
+        if (!session?.user?.id) return;
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                refetchFromCloud();
+            }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        window.addEventListener('focus', refetchFromCloud);
+
+        let appListenerSub = null;
+        import('@capacitor/app').then(({ App }) => {
+            App.addListener('appStateChange', (state) => {
+                if (state.isActive) {
+                    refetchFromCloud();
+                } else if (session && isCloudLoaded) {
+                    saveToCloud();
+                }
+            }).then(sub => {
+                appListenerSub = sub;
+            });
+        });
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.removeEventListener('focus', refetchFromCloud);
+            if (appListenerSub && appListenerSub.remove) appListenerSub.remove();
+        };
+    }, [session?.user?.id, isCloudLoaded]);
+
     // --- Persistence (Local + Cloud) ---
-    const saveToCloud = async () => {
-        if (!session || !isCloudLoaded) return;
+    const saveToCloud = async (customOverrides = {}) => {
+        if (!session || !isCloudLoaded || isApplyingCloudUpdateRef.current) return;
+
+        const now = Date.now();
+        const saveToken = 'save_' + now + '_' + Math.random().toString(36).substr(2, 6);
+        lastClientSaveTokenRef.current = saveToken;
+
+        // Safety timeout to clear token after 4 seconds
+        setTimeout(() => {
+            if (lastClientSaveTokenRef.current === saveToken) {
+                lastClientSaveTokenRef.current = null;
+            }
+        }, 4000);
 
         const localToken = localStorage.getItem('bibleQuiz_sessionToken');
         const currentStreakCount = parseInt(localStorage.getItem('bibleQuiz_streak') || '0', 10);
@@ -499,27 +680,35 @@ export const GameProvider = ({ children }) => {
 
         const gameData = {
             lives,
-            nextRestoreTime, // Persist timer target
+            nextRestoreTime,
             hints,
             userName,
             userPhoto,
             progress,
-            infiniteLivesUntil, // Add this field
+            infiniteLivesUntil,
+            bookmarks,
             streak: !isNaN(currentStreakCount) && currentStreakCount > 0 ? currentStreakCount : (streakData.streak || 0),
             lastPlayDate: currentLastPlay,
             streakStatus: streakData.status || 'active',
-            active_session_token: localToken, // Persist the token
-            last_updated: Date.now()
+            active_session_token: localToken,
+            last_updated: now,
+            client_save_token: saveToken,
+            ...customOverrides
         };
 
-        await supabase
-            .from('profiles')
-            .upsert({
-                id: session.user.id,
-                game_data: gameData,
-                updated_at: new Date()
-            });
+        try {
+            await supabase
+                .from('profiles')
+                .upsert({
+                    id: session.user.id,
+                    game_data: gameData,
+                    updated_at: new Date()
+                });
+        } catch (e) {
+            console.error("Error saving game data to Supabase:", e);
+        }
     };
+    saveToCloudRef.current = saveToCloud;
 
     useEffect(() => {
         // Local Save (Always)
@@ -533,29 +722,14 @@ export const GameProvider = ({ children }) => {
         localStorage.setItem('bibleQuizProgress', JSON.stringify(progress));
         if (infiniteLivesUntil) localStorage.setItem('bibleQuiz_infiniteLivesUntil', infiniteLivesUntil);
         else localStorage.removeItem('bibleQuiz_infiniteLivesUntil');
+        localStorage.setItem('bibleQuiz_bookmarks', JSON.stringify(bookmarks));
 
-        // Cloud Save (Debounced)
-        if (session && isCloudLoaded) {
-            const timeout = setTimeout(saveToCloud, 1000); // Reduced to 1s
+        // Cloud Save (Debounced) - Only if not currently applying an update from cloud
+        if (session && isCloudLoaded && !isApplyingCloudUpdateRef.current) {
+            const timeout = setTimeout(() => saveToCloud(), 1000);
             return () => clearTimeout(timeout);
         }
-    }, [lives, nextRestoreTime, userName, userPhoto, nameLocked, hints, infiniteLivesUntil, progress, streakData.streak, session, isCloudLoaded]);
-
-    // Force Save on App Background
-    useEffect(() => {
-        const handleAppStateChange = async (state) => {
-            if (!state.isActive && session && isCloudLoaded) {
-                // App went to background - Save Immediately
-                await saveToCloud();
-            }
-        };
-
-        import('@capacitor/app').then(({ App }) => {
-            App.addListener('appStateChange', handleAppStateChange);
-        });
-
-        // No cleanup for listener easy here, but strictly OK for Context which lives forever
-    }, [session, isCloudLoaded, lives, hints, userName, userPhoto, progress]);
+    }, [lives, nextRestoreTime, userName, userPhoto, nameLocked, hints, infiniteLivesUntil, progress, bookmarks, streakData.streak, session, isCloudLoaded]);
 
     // --- Timer Loop (Unified) ---
     useEffect(() => {
@@ -618,10 +792,12 @@ export const GameProvider = ({ children }) => {
 
     const activateInfiniteLives = (durationMinutes = 60) => {
         const addedMs = durationMinutes * 60 * 1000;
+        const now = Date.now();
         setInfiniteLivesUntil(prev => {
-            const now = Date.now();
             const baseTime = (prev && prev > now) ? prev : now;
-            return baseTime + addedMs;
+            const nextTime = baseTime + addedMs;
+            saveToCloud({ infiniteLivesUntil: nextTime, lives: MAX_LIVES, nextRestoreTime: null });
+            return nextTime;
         });
         setLives(MAX_LIVES);
         setNextRestoreTime(null);
@@ -636,7 +812,11 @@ export const GameProvider = ({ children }) => {
     };
 
     const addHints = (amount) => {
-        setHints(h => h + amount);
+        setHints(h => {
+            const next = h + amount;
+            saveToCloud({ hints: next });
+            return next;
+        });
     };
 
     const updateProfile = async (name, photo) => {
@@ -685,30 +865,19 @@ export const GameProvider = ({ children }) => {
 
         // Force Immediate Cloud Save
         if (session) {
-            try {
-                const localToken = localStorage.getItem('bibleQuiz_sessionToken');
-                const { data } = await supabase.from('profiles').select('game_data').eq('id', session.user.id).single();
-                const existing = data?.game_data || {};
-                const updatedGameData = {
-                    ...existing,
-                    userName: updatedName,
-                    userPhoto: updatedPhoto,
-                    active_session_token: localToken,
-                    last_updated: Date.now()
-                };
-                await supabase.from('profiles').upsert({
-                    id: session.user.id,
-                    game_data: updatedGameData,
-                    updated_at: new Date()
-                });
-            } catch (e) {
-                console.error("Cloud profile save error:", e);
-            }
+            await saveToCloud({
+                userName: updatedName,
+                userPhoto: updatedPhoto
+            });
         }
     };
 
     const addLife = () => {
-        setLives(l => (l < MAX_LIVES ? l + 1 : l));
+        setLives(l => {
+            const next = l < MAX_LIVES ? l + 1 : l;
+            saveToCloud({ lives: next });
+            return next;
+        });
     };
 
     const updateLevelProgress = (bookName, level, data, difficulty = 'beginner') => {
@@ -717,7 +886,7 @@ export const GameProvider = ({ children }) => {
             const currentDiffProgress = prev[diffKey] || (diffKey === 'beginner' ? prev : {}) || {};
             const currentBookProgress = currentDiffProgress[bookName] || {};
 
-            return {
+            const updatedProgress = {
                 ...prev,
                 [diffKey]: {
                     ...currentDiffProgress,
@@ -734,6 +903,9 @@ export const GameProvider = ({ children }) => {
                     }
                 } : {})
             };
+
+            saveToCloud({ progress: updatedProgress });
+            return updatedProgress;
         });
     };
 
@@ -760,21 +932,12 @@ export const GameProvider = ({ children }) => {
 
         // Force Cloud Save immediately
         if (session) {
-            const gameData = {
+            await saveToCloud({
                 lives: defaultLives,
                 hints: defaultHints,
-                userName,
-                userPhoto,
                 progress: {},
-                last_updated: Date.now()
-            };
-            await supabase
-                .from('profiles')
-                .upsert({
-                    id: session.user.id,
-                    game_data: gameData,
-                    updated_at: new Date()
-                });
+                nextRestoreTime: null
+            });
         }
     };
 
@@ -837,7 +1000,10 @@ export const GameProvider = ({ children }) => {
         streakStatus,
         isStreakFrozen,
         isPlayedToday,
-        recordDailyPlay
+        recordDailyPlay,
+        refetchFromCloud,
+        refreshFromCloud: refetchFromCloud,
+        saveToCloud
     };
 
     return (
